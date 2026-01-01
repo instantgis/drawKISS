@@ -16,6 +16,11 @@
   font-size: var(--font-size-xl);
 }
 
+.header-actions {
+  display: flex;
+  gap: var(--space-sm);
+}
+
 .category-bar {
   display: flex;
   gap: var(--space-sm);

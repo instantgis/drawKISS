@@ -17,5 +17,9 @@ export const routes: Routes = [
   {
     path: 'easel/:imageId',
     loadComponent: () => import('./easel/easel.component').then(m => m.EaselComponent)
+  },
+  {
+    path: 'about',
+    loadComponent: () => import('./about/about.component').then(m => m.AboutComponent)
   }
 ];
