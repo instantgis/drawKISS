@@ -39,6 +39,8 @@ export type Database = {
           created_at: string | null
           date_taken: string | null
           file_size_bytes: number | null
+          grid_cols: number | null
+          grid_rows: number | null
           height: number | null
           id: string
           raw_path: string
@@ -51,6 +53,8 @@ export type Database = {
           created_at?: string | null
           date_taken?: string | null
           file_size_bytes?: number | null
+          grid_cols?: number | null
+          grid_rows?: number | null
           height?: number | null
           id?: string
           raw_path: string
@@ -63,6 +67,8 @@ export type Database = {
           created_at?: string | null
           date_taken?: string | null
           file_size_bytes?: number | null
+          grid_cols?: number | null
+          grid_rows?: number | null
           height?: number | null
           id?: string
           raw_path?: string

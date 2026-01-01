@@ -65,6 +65,7 @@
 }
 
 .image-card {
+  position: relative;
   border-radius: var(--radius-md);
   overflow: hidden;
   background: var(--color-surface);
@@ -76,6 +77,40 @@
 .image-card:hover {
   transform: translateY(-2px);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.delete-btn {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 24px;
+  height: 24px;
+  border: none;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.6);
+  color: white;
+  font-size: 16px;
+  line-height: 1;
+  cursor: pointer;
+  opacity: 1;
+  transition: background 0.2s ease;
+  z-index: 1;
+}
+
+.delete-btn:hover {
+  background: var(--color-danger, #ef4444);
+}
+
+/* On desktop, hide until hover */
+@media (hover: hover) {
+  .delete-btn {
+    opacity: 0;
+    transition: opacity 0.2s ease, background 0.2s ease;
+  }
+
+  .image-card:hover .delete-btn {
+    opacity: 1;
+  }
 }
 
 .image-card img {

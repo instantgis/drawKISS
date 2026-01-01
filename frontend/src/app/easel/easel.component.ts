@@ -1,4 +1,4 @@
-import { Component, signal, computed, inject, OnInit, OnDestroy } from '@angular/core';
+import { Component, signal, computed, inject, OnInit, OnDestroy, ElementRef, HostListener } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { SupabaseService, LayerRow } from '../supabase.service';
 
@@ -20,6 +20,8 @@ export class EaselComponent implements OnInit, OnDestroy {
   private route = inject(ActivatedRoute);
   private router = inject(Router);
 
+  private currentImageId: string | null = null;
+
   imageUrl = signal<string | null>(null);
   imageTitle = signal<string>('');
   layers = signal<LayerRow[]>([]);
@@ -31,7 +33,21 @@ export class EaselComponent implements OnInit, OnDestroy {
   error = signal<string | null>(null);
   isLoading = signal(false);
 
+  // Zoom & pan state
+  zoom = signal(1);
+  panX = signal(0);
+  panY = signal(0);
+  isPanning = signal(false);
+  private panStartX = 0;
+  private panStartY = 0;
+  private panOffsetX = 0;
+  private panOffsetY = 0;
+
+  // Fullscreen state
+  isFullscreen = signal(false);
+
   private refreshInterval: ReturnType<typeof setInterval> | null = null;
+  private el = inject(ElementRef);
 
   gridLines = computed<GridLine[]>(() => {
     const rows = this.gridRows();
@@ -103,6 +119,7 @@ export class EaselComponent implements OnInit, OnDestroy {
   async loadImage(imageId: string) {
     this.isLoading.set(true);
     this.error.set(null);
+    this.currentImageId = imageId;
 
     try {
       await this.supabase.loadImage(imageId);
@@ -114,6 +131,9 @@ export class EaselComponent implements OnInit, OnDestroy {
         this.imageTitle.set(image.title || 'Untitled');
         // Default to raw image
         this.imageUrl.set(this.supabase.getPublicUrl(image.raw_path));
+        // Restore grid settings
+        this.gridRows.set(image.grid_rows ?? 5);
+        this.gridCols.set(image.grid_cols ?? 5);
       }
 
       this.layers.set(layers);
@@ -181,6 +201,90 @@ export class EaselComponent implements OnInit, OnDestroy {
 
   clearSelection() {
     this.selectedCell.set(null);
+  }
+
+  // Zoom methods
+  zoomIn() {
+    this.zoom.update(z => Math.min(z + 0.25, 5));
+  }
+
+  zoomOut() {
+    this.zoom.update(z => Math.max(z - 0.25, 0.5));
+  }
+
+  resetZoom() {
+    this.zoom.set(1);
+    this.panX.set(0);
+    this.panY.set(0);
+  }
+
+  onWheel(event: WheelEvent) {
+    event.preventDefault();
+    const delta = event.deltaY > 0 ? -0.1 : 0.1;
+    this.zoom.update(z => Math.max(0.5, Math.min(5, z + delta)));
+  }
+
+  // Pan methods
+  onPanStart(event: MouseEvent | TouchEvent) {
+    if (this.zoom() <= 1) return;
+    this.isPanning.set(true);
+    const point = this.getEventPoint(event);
+    this.panStartX = point.x;
+    this.panStartY = point.y;
+    this.panOffsetX = this.panX();
+    this.panOffsetY = this.panY();
+  }
+
+  onPanMove(event: MouseEvent | TouchEvent) {
+    if (!this.isPanning()) return;
+    const point = this.getEventPoint(event);
+    const dx = point.x - this.panStartX;
+    const dy = point.y - this.panStartY;
+    this.panX.set(this.panOffsetX + dx);
+    this.panY.set(this.panOffsetY + dy);
+  }
+
+  onPanEnd() {
+    this.isPanning.set(false);
+  }
+
+  private getEventPoint(event: MouseEvent | TouchEvent): { x: number; y: number } {
+    if (event instanceof TouchEvent) {
+      return { x: event.touches[0].clientX, y: event.touches[0].clientY };
+    }
+    return { x: event.clientX, y: event.clientY };
+  }
+
+  // Fullscreen methods
+  async toggleFullscreen() {
+    const container = this.el.nativeElement.querySelector('.easel-container');
+    if (!document.fullscreenElement) {
+      await container?.requestFullscreen();
+      this.isFullscreen.set(true);
+    } else {
+      await document.exitFullscreen();
+      this.isFullscreen.set(false);
+    }
+  }
+
+  @HostListener('document:fullscreenchange')
+  onFullscreenChange() {
+    this.isFullscreen.set(!!document.fullscreenElement);
+  }
+
+  // Save grid settings
+  async saveGridSettings() {
+    if (!this.currentImageId) return;
+
+    try {
+      await this.supabase.updateGridSettings(
+        this.currentImageId,
+        this.gridRows(),
+        this.gridCols()
+      );
+    } catch (e) {
+      // Error already set in service
+    }
   }
 }
 

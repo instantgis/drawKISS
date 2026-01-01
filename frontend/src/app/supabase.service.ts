@@ -202,6 +202,31 @@ export class SupabaseService {
   }
 
   /**
+   * Update grid settings for an image.
+   */
+  async updateGridSettings(imageId: string, gridRows: number, gridCols: number): Promise<void> {
+    try {
+      const { error } = await this.supabase
+        .schema('drawkiss')
+        .from('images')
+        .update({ grid_rows: gridRows, grid_cols: gridCols })
+        .eq('id', imageId);
+
+      if (error) throw error;
+
+      // Update local state if this is the current image
+      const current = this.currentImage();
+      if (current?.id === imageId) {
+        this.currentImage.set({ ...current, grid_rows: gridRows, grid_cols: gridCols });
+      }
+    } catch (e) {
+      const message = e instanceof Error ? e.message : 'Failed to save grid settings';
+      this.error.set(message);
+      throw e;
+    }
+  }
+
+  /**
    * Get all images, optionally filtered by category.
    */
   async getAllImages(categoryId?: string): Promise<ImageRow[]> {
@@ -247,6 +272,68 @@ export class SupabaseService {
       const message = e instanceof Error ? e.message : 'Failed to load categories';
       this.error.set(message);
       throw e;
+    }
+  }
+
+  /**
+   * Delete an image and all its layers (storage + database).
+   */
+  async deleteImage(imageId: string): Promise<void> {
+    this.isLoading.set(true);
+
+    try {
+      // 1. Get the image to find its raw_path
+      const { data: image, error: imageError } = await this.supabase
+        .schema('drawkiss')
+        .from('images')
+        .select()
+        .eq('id', imageId)
+        .single();
+
+      if (imageError) throw imageError;
+
+      // 2. Get all layers for this image
+      const { data: layers, error: layersError } = await this.supabase
+        .schema('drawkiss')
+        .from('layers')
+        .select()
+        .eq('image_id', imageId);
+
+      if (layersError) throw layersError;
+
+      // 3. Delete layer files from storage
+      if (layers && layers.length > 0) {
+        const layerPaths = layers.map(l => l.storage_path);
+        await this.supabase.storage.from('drawkiss').remove(layerPaths);
+      }
+
+      // 4. Delete the raw image from storage
+      if (image?.raw_path) {
+        await this.supabase.storage.from('drawkiss').remove([image.raw_path]);
+      }
+
+      // 5. Delete layers from database (foreign key cascade should handle this, but be explicit)
+      await this.supabase
+        .schema('drawkiss')
+        .from('layers')
+        .delete()
+        .eq('image_id', imageId);
+
+      // 6. Delete the image from database
+      const { error: deleteError } = await this.supabase
+        .schema('drawkiss')
+        .from('images')
+        .delete()
+        .eq('id', imageId);
+
+      if (deleteError) throw deleteError;
+
+    } catch (e) {
+      const message = e instanceof Error ? e.message : 'Delete failed';
+      this.error.set(message);
+      throw e;
+    } finally {
+      this.isLoading.set(false);
     }
   }
 }

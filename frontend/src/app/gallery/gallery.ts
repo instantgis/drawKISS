@@ -59,4 +59,19 @@ export class Gallery implements OnInit {
     if (!dateStr) return '';
     return new Date(dateStr).toLocaleDateString();
   }
+
+  async deleteImage(event: Event, image: ImageRow) {
+    event.stopPropagation(); // Don't open the image
+
+    const confirmed = confirm(`Delete "${image.title || 'Untitled'}"?\n\nThis will permanently delete the image and all its layers.`);
+    if (!confirmed) return;
+
+    try {
+      await this.supabase.deleteImage(image.id);
+      // Remove from local state
+      this.images.update(imgs => imgs.filter(i => i.id !== image.id));
+    } catch (e) {
+      alert('Failed to delete image');
+    }
+  }
 }

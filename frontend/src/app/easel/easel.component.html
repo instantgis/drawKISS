@@ -18,6 +18,10 @@
              (input)="gridCols.set(+$any($event.target).value)" />
     </div>
 
+    <button class="btn btn-secondary" (click)="saveGridSettings()" title="Save grid settings">
+      💾 Save Grid
+    </button>
+
     <button class="btn btn-secondary" (click)="toggleGrid()">
       {{ showGrid() ? 'Hide Grid' : 'Show Grid' }}
     </button>
@@ -25,6 +29,20 @@
     @if (selectedCell()) {
       <button class="btn btn-secondary" (click)="clearSelection()">Clear Focus</button>
     }
+
+    <div class="toolbar-divider"></div>
+
+    <!-- Zoom controls -->
+    <div class="toolbar-group zoom-controls">
+      <button class="btn btn-icon" (click)="zoomOut()" title="Zoom Out">−</button>
+      <span class="zoom-level">{{ (zoom() * 100).toFixed(0) }}%</span>
+      <button class="btn btn-icon" (click)="zoomIn()" title="Zoom In">+</button>
+      <button class="btn btn-icon" (click)="resetZoom()" title="Reset Zoom">⟲</button>
+    </div>
+
+    <button class="btn btn-secondary" (click)="toggleFullscreen()" title="Toggle Fullscreen">
+      {{ isFullscreen() ? '⛶' : '⛶' }}
+    </button>
   </div>
 
   <!-- Layer selector -->
@@ -48,25 +66,36 @@
   }
 
   <!-- Main canvas area -->
-  <div class="canvas-area">
+  <div class="canvas-area"
+       (wheel)="onWheel($event)"
+       (mousedown)="onPanStart($event)"
+       (mousemove)="onPanMove($event)"
+       (mouseup)="onPanEnd()"
+       (mouseleave)="onPanEnd()"
+       (touchstart)="onPanStart($event)"
+       (touchmove)="onPanMove($event)"
+       (touchend)="onPanEnd()"
+       [class.panning]="isPanning()">
     @if (error()) {
       <div class="error-overlay">
         <p>{{ error() }}</p>
       </div>
     }
 
-    @if (imageUrl()) {
-      <img [src]="imageUrl()" alt="Sketch reference" class="reference-image" />
-    } @else {
-      <div class="placeholder">
-        <p>No image loaded</p>
-        <p class="hint">Take a photo from the Capture page</p>
-      </div>
-    }
+    <div class="zoom-container"
+         [style.transform]="'scale(' + zoom() + ') translate(' + panX() + 'px, ' + panY() + 'px)'">
+      @if (imageUrl()) {
+        <img [src]="imageUrl()" alt="Sketch reference" class="reference-image" />
+      } @else {
+        <div class="placeholder">
+          <p>No image loaded</p>
+          <p class="hint">Take a photo from the Capture page</p>
+        </div>
+      }
 
-    <!-- SVG Grid Overlay -->
-    @if (showGrid()) {
-      <svg class="grid-overlay" viewBox="0 0 100 100" preserveAspectRatio="none">
+      <!-- SVG Grid Overlay -->
+      @if (showGrid()) {
+        <svg class="grid-overlay" viewBox="0 0 100 100" preserveAspectRatio="none">
         <!-- Clickable cells -->
         @for (cell of cells(); track cell.row + '-' + cell.col) {
           <rect
@@ -80,8 +109,8 @@
           />
         }
 
-        <!-- Grid lines -->
-        @for (line of gridLines(); track line.x1 + '-' + line.y1 + '-' + line.x2 + '-' + line.y2) {
+        <!-- Grid lines - dark outline -->
+        @for (line of gridLines(); track 'o-' + line.x1 + '-' + line.y1) {
           <line
             [attr.x1]="line.x1 + '%'"
             [attr.y1]="line.y1 + '%'"
@@ -90,8 +119,19 @@
             class="grid-line"
           />
         }
-      </svg>
-    }
+        <!-- Grid lines - yellow inner -->
+        @for (line of gridLines(); track 'i-' + line.x1 + '-' + line.y1) {
+          <line
+            [attr.x1]="line.x1 + '%'"
+            [attr.y1]="line.y1 + '%'"
+            [attr.x2]="line.x2 + '%'"
+            [attr.y2]="line.y2 + '%'"
+            class="grid-line-inner"
+          />
+        }
+        </svg>
+      }
+    </div>
   </div>
 
 </div>
