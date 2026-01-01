@@ -7,13 +7,14 @@
 
 .chip {
   padding: var(--space-xs) var(--space-md);
-  border-radius: 1rem;
-  border: 1px solid var(--color-border);
+  border-radius: 10px 16px 12px 18px;
+  border: 2px solid var(--color-border);
   background: var(--color-surface);
   color: var(--color-text);
   font-size: var(--font-size-sm);
   cursor: pointer;
   transition: all 0.15s ease;
+  filter: url(#pencil-stroke);
 }
 
 .chip:hover {
@@ -29,6 +30,7 @@
 .chip-add {
   font-weight: bold;
   min-width: 2rem;
+  border-style: dashed;
 }
 
 .chip-confirm {
@@ -39,10 +41,13 @@
 
 .chip-input {
   padding: var(--space-xs) var(--space-md);
-  border-radius: 1rem;
-  border: 1px solid var(--color-primary);
+  border-radius: 10px 16px 12px 18px;
+  border: 2px solid var(--color-primary);
+  background: var(--color-surface);
   font-size: var(--font-size-sm);
+  font-family: var(--font-family);
   width: 8rem;
   outline: none;
+  filter: url(#pencil-stroke);
 }
 

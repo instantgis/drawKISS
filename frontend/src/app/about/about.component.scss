@@ -4,7 +4,9 @@
   align-items: center;
   justify-content: center;
   padding: var(--space-xl);
-  background: var(--color-bg);
+  background: var(--color-bg) var(--paper-texture) repeat;
+  background-size: 400px;
+  background-blend-mode: multiply;
 }
 
 .about-content {

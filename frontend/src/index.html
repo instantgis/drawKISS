@@ -8,6 +8,29 @@
   <link rel="icon" type="image/x-icon" href="favicon.ico">
 </head>
 <body>
+  <!-- SVG Filters and Patterns for pencil effects -->
+  <svg style="position: absolute; width: 0; height: 0;" aria-hidden="true">
+    <defs>
+      <!-- Pencil stroke wobble filter -->
+      <filter id="pencil-stroke" x="-5%" y="-5%" width="110%" height="110%">
+        <feTurbulence type="fractalNoise" baseFrequency="0.04" numOctaves="3" result="noise"/>
+        <feDisplacementMap in="SourceGraphic" in2="noise" scale="2" xChannelSelector="R" yChannelSelector="G"/>
+      </filter>
+      <filter id="pencil-stroke-strong" x="-10%" y="-10%" width="120%" height="120%">
+        <feTurbulence type="fractalNoise" baseFrequency="0.03" numOctaves="4" result="noise"/>
+        <feDisplacementMap in="SourceGraphic" in2="noise" scale="3" xChannelSelector="R" yChannelSelector="G"/>
+      </filter>
+
+      <!-- Hatching pattern for shadows -->
+      <pattern id="hatch" width="4" height="4" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+        <line x1="0" y1="0" x2="0" y2="4" stroke="#5a5048" stroke-width="1" stroke-opacity="0.4"/>
+      </pattern>
+      <pattern id="crosshatch" width="4" height="4" patternUnits="userSpaceOnUse">
+        <line x1="0" y1="0" x2="4" y2="4" stroke="#5a5048" stroke-width="0.5" stroke-opacity="0.3"/>
+        <line x1="4" y1="0" x2="0" y2="4" stroke="#5a5048" stroke-width="0.5" stroke-opacity="0.3"/>
+      </pattern>
+    </defs>
+  </svg>
   <app-root></app-root>
 </body>
 </html>

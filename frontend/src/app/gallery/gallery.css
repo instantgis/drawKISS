@@ -30,12 +30,13 @@
 
 .category-chip {
   padding: var(--space-xs) var(--space-md);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-full);
+  border: 2px solid var(--color-border);
+  border-radius: 12px 18px 14px 20px;
   background: var(--color-surface);
   color: var(--color-text);
   cursor: pointer;
   transition: all 0.2s ease;
+  filter: url(#pencil-stroke);
 }
 
 .category-chip:hover {
@@ -71,17 +72,39 @@
 
 .image-card {
   position: relative;
-  border-radius: var(--radius-md);
-  overflow: hidden;
+  border-radius: 6px 10px 8px 12px;
+  overflow: visible;
   background: var(--color-surface);
-  border: 1px solid var(--color-border);
+  border: 2px solid var(--color-border);
   cursor: pointer;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  transition: transform 0.2s ease;
+  filter: url(#pencil-stroke);
+}
+
+/* Hatching shadow */
+.image-card::before {
+  content: '';
+  position: absolute;
+  top: 6px;
+  left: 6px;
+  right: -6px;
+  bottom: -6px;
+  background: url("data:image/svg+xml,%3Csvg width='6' height='6' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0 6L6 0M-1 1L1 -1M5 7L7 5' stroke='%235a5048' stroke-width='1' stroke-opacity='0.35'/%3E%3C/svg%3E");
+  border-radius: 8px 12px 10px 14px;
+  z-index: -1;
+  transition: transform 0.2s ease;
 }
 
 .image-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  transform: translate(-2px, -2px);
+}
+
+.image-card:hover::before {
+  transform: translate(2px, 2px);
+}
+
+.image-card > img {
+  border-radius: 4px 8px 0 0;
 }
 
 .delete-btn {
