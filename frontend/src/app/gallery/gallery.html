@@ -1,0 +1,53 @@
+<div class="gallery-container">
+  <header class="gallery-header">
+    <h1>Gallery</h1>
+    <a routerLink="/capture" class="btn btn-primary">+ New Capture</a>
+  </header>
+
+  <!-- Category filter -->
+  @if (categories().length > 0) {
+    <div class="category-bar">
+      <button
+        class="category-chip"
+        [class.active]="selectedCategory() === null"
+        (click)="selectCategory(null)">
+        All
+      </button>
+      @for (cat of categories(); track cat.id) {
+        <button
+          class="category-chip"
+          [class.active]="selectedCategory() === cat.id"
+          (click)="selectCategory(cat.id)">
+          {{ cat.name }}
+        </button>
+      }
+    </div>
+  }
+
+  <!-- Loading state -->
+  @if (isLoading()) {
+    <div class="loading">Loading...</div>
+  }
+
+  <!-- Image grid -->
+  @if (!isLoading()) {
+    @if (filteredImages().length === 0) {
+      <div class="empty-state">
+        <p>No images yet</p>
+        <p class="hint">Take a photo from the Capture page</p>
+      </div>
+    } @else {
+      <div class="image-grid">
+        @for (image of filteredImages(); track image.id) {
+          <div class="image-card" (click)="openImage(image.id)">
+            <img [src]="getThumbnailUrl(image)" [alt]="image.title || 'Untitled'" loading="lazy" />
+            <div class="image-info">
+              <span class="image-title">{{ image.title || 'Untitled' }}</span>
+              <span class="image-date">{{ formatDate(image.date_taken) }}</span>
+            </div>
+          </div>
+        }
+      </div>
+    }
+  }
+</div>

@@ -1,5 +1,6 @@
 import { Component, signal, computed, inject, OnInit, OnDestroy } from '@angular/core';
-import { SupabaseService } from '../supabase.service';
+import { ActivatedRoute, Router } from '@angular/router';
+import { SupabaseService, LayerRow } from '../supabase.service';
 
 interface GridLine {
   x1: number;
@@ -16,13 +17,19 @@ interface GridLine {
 })
 export class EaselComponent implements OnInit, OnDestroy {
   private supabase = inject(SupabaseService);
+  private route = inject(ActivatedRoute);
+  private router = inject(Router);
 
   imageUrl = signal<string | null>(null);
+  imageTitle = signal<string>('');
+  layers = signal<LayerRow[]>([]);
+  selectedLayerId = signal<string | null>(null);
   gridRows = signal(5);
   gridCols = signal(5);
   selectedCell = signal<{ row: number; col: number } | null>(null);
   showGrid = signal(true);
   error = signal<string | null>(null);
+  isLoading = signal(false);
 
   private refreshInterval: ReturnType<typeof setInterval> | null = null;
 
@@ -78,9 +85,13 @@ export class EaselComponent implements OnInit, OnDestroy {
   });
 
   ngOnInit() {
-    this.loadCurrentImage();
-    // Auto-refresh every 10 seconds
-    this.refreshInterval = setInterval(() => this.loadCurrentImage(), 10000);
+    // Get imageId from route params
+    const imageId = this.route.snapshot.paramMap.get('imageId');
+    if (imageId) {
+      this.loadImage(imageId);
+    } else {
+      this.error.set('No image ID provided');
+    }
   }
 
   ngOnDestroy() {
@@ -89,20 +100,64 @@ export class EaselComponent implements OnInit, OnDestroy {
     }
   }
 
-  async loadCurrentImage() {
+  async loadImage(imageId: string) {
+    this.isLoading.set(true);
+    this.error.set(null);
+
     try {
-      // Get the current image from supabase service
+      await this.supabase.loadImage(imageId);
+
       const image = this.supabase.currentImage();
+      const layers = this.supabase.currentLayers();
+
       if (image) {
-        // Show raw image as base
+        this.imageTitle.set(image.title || 'Untitled');
+        // Default to raw image
         this.imageUrl.set(this.supabase.getPublicUrl(image.raw_path));
       }
 
-      // TODO: Layer compositing with currentLayers()
-      this.error.set(null);
+      this.layers.set(layers);
+
+      // If there are layers, select the first visible one
+      const visibleLayer = layers.find(l => l.visible);
+      if (visibleLayer) {
+        this.selectLayer(visibleLayer.id);
+      }
     } catch (e) {
       this.error.set('Failed to load image');
+    } finally {
+      this.isLoading.set(false);
     }
+  }
+
+  selectLayer(layerId: string | null) {
+    this.selectedLayerId.set(layerId);
+
+    if (layerId) {
+      const layer = this.layers().find(l => l.id === layerId);
+      if (layer) {
+        this.imageUrl.set(this.supabase.getPublicUrl(layer.storage_path));
+        return;
+      }
+    }
+
+    // Fall back to raw image
+    const image = this.supabase.currentImage();
+    if (image) {
+      this.imageUrl.set(this.supabase.getPublicUrl(image.raw_path));
+    }
+  }
+
+  showRawImage() {
+    this.selectedLayerId.set(null);
+    const image = this.supabase.currentImage();
+    if (image) {
+      this.imageUrl.set(this.supabase.getPublicUrl(image.raw_path));
+    }
+  }
+
+  goBack() {
+    this.router.navigate(['/gallery']);
   }
 
   selectCell(row: number, col: number) {

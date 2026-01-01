@@ -7,6 +7,7 @@ export type ImageRow = Database['drawkiss']['Tables']['images']['Row'];
 export type ImageInsert = Database['drawkiss']['Tables']['images']['Insert'];
 export type LayerRow = Database['drawkiss']['Tables']['layers']['Row'];
 export type LayerInsert = Database['drawkiss']['Tables']['layers']['Insert'];
+export type CategoryRow = Database['drawkiss']['Tables']['categories']['Row'];
 
 @Injectable({
   providedIn: 'root'
@@ -149,11 +150,26 @@ export class SupabaseService {
   }
 
   /**
+   * Get thumbnail URL using Supabase image transformations.
+   * Requires Pro Plan. Falls back to raw image if transforms not available.
+   */
+  getThumbnailUrl(path: string, width = 300, height = 225): string {
+    const { data } = this.supabase.storage.from('drawkiss').getPublicUrl(path, {
+      transform: {
+        width,
+        height,
+        resize: 'cover'
+      }
+    });
+    return data.publicUrl;
+  }
+
+  /**
    * Load an image with its layers.
    */
   async loadImage(imageId: string): Promise<void> {
     this.isLoading.set(true);
-    
+
     try {
       // Load image
       const { data: image, error: imageError } = await this.supabase
@@ -162,10 +178,10 @@ export class SupabaseService {
         .select()
         .eq('id', imageId)
         .single();
-      
+
       if (imageError) throw imageError;
       this.currentImage.set(image);
-      
+
       // Load layers
       const { data: layers, error: layersError } = await this.supabase
         .schema('drawkiss')
@@ -173,7 +189,7 @@ export class SupabaseService {
         .select()
         .eq('image_id', imageId)
         .order('layer_order', { ascending: true });
-      
+
       if (layersError) throw layersError;
       this.currentLayers.set(layers || []);
     } catch (e) {
@@ -182,6 +198,55 @@ export class SupabaseService {
       throw e;
     } finally {
       this.isLoading.set(false);
+    }
+  }
+
+  /**
+   * Get all images, optionally filtered by category.
+   */
+  async getAllImages(categoryId?: string): Promise<ImageRow[]> {
+    this.isLoading.set(true);
+
+    try {
+      let query = this.supabase
+        .schema('drawkiss')
+        .from('images')
+        .select()
+        .order('created_at', { ascending: false });
+
+      if (categoryId) {
+        query = query.eq('category_id', categoryId);
+      }
+
+      const { data, error } = await query;
+      if (error) throw error;
+      return data || [];
+    } catch (e) {
+      const message = e instanceof Error ? e.message : 'Failed to load images';
+      this.error.set(message);
+      throw e;
+    } finally {
+      this.isLoading.set(false);
+    }
+  }
+
+  /**
+   * Get all categories.
+   */
+  async getCategories(): Promise<CategoryRow[]> {
+    try {
+      const { data, error } = await this.supabase
+        .schema('drawkiss')
+        .from('categories')
+        .select()
+        .order('sort_order', { ascending: true });
+
+      if (error) throw error;
+      return data || [];
+    } catch (e) {
+      const message = e instanceof Error ? e.message : 'Failed to load categories';
+      this.error.set(message);
+      throw e;
     }
   }
 }
