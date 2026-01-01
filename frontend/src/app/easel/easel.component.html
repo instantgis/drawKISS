@@ -4,7 +4,12 @@
   <div class="toolbar">
     <button class="btn btn-secondary" (click)="goBack()">← Gallery</button>
 
-    <span class="toolbar-title">{{ imageTitle() }}</span>
+    <input
+      class="toolbar-title-input"
+      [value]="imageTitle()"
+      (blur)="updateTitle($any($event.target).value)"
+      (keydown.enter)="$any($event.target).blur()"
+      placeholder="Image title..." />
 
     <div class="toolbar-group">
       <label>Rows: {{ gridRows() }}</label>
@@ -21,6 +26,12 @@
     <button class="btn btn-secondary" (click)="saveGridSettings()" title="Save grid settings">
       💾 Save Grid
     </button>
+
+    <div class="toolbar-group">
+      <app-category-picker
+        [selectedId]="selectedCategory()"
+        (selectedChange)="updateCategory($event)" />
+    </div>
 
     <button class="btn btn-secondary" (click)="toggleGrid()">
       {{ showGrid() ? 'Hide Grid' : 'Show Grid' }}
@@ -55,12 +66,15 @@
         Original
       </button>
       @for (layer of layers(); track layer.id) {
-        <button
-          class="layer-chip"
-          [class.active]="selectedLayerId() === layer.id"
-          (click)="selectLayer(layer.id)">
-          {{ layer.name || layer.type }}
-        </button>
+        <div class="layer-chip-wrapper">
+          <button
+            class="layer-chip"
+            [class.active]="selectedLayerId() === layer.id"
+            (click)="selectLayer(layer.id)">
+            {{ layer.type }} ({{ layer.param_value }})
+          </button>
+          <button class="layer-delete" (click)="deleteLayer($event, layer.id)" title="Delete layer">×</button>
+        </div>
       }
     </div>
   }

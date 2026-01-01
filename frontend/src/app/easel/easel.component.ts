@@ -1,6 +1,7 @@
 import { Component, signal, computed, inject, OnInit, OnDestroy, ElementRef, HostListener } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { SupabaseService, LayerRow } from '../supabase.service';
+import { CategoryPickerComponent } from '../shared/category-picker/category-picker.component';
 
 interface GridLine {
   x1: number;
@@ -13,7 +14,8 @@ interface GridLine {
 @Component({
   selector: 'app-easel',
   templateUrl: './easel.component.html',
-  styleUrl: './easel.component.scss'
+  styleUrl: './easel.component.scss',
+  imports: [CategoryPickerComponent]
 })
 export class EaselComponent implements OnInit, OnDestroy {
   private supabase = inject(SupabaseService);
@@ -24,6 +26,7 @@ export class EaselComponent implements OnInit, OnDestroy {
 
   imageUrl = signal<string | null>(null);
   imageTitle = signal<string>('');
+  selectedCategory = signal<string | null>(null);
   layers = signal<LayerRow[]>([]);
   selectedLayerId = signal<string | null>(null);
   gridRows = signal(5);
@@ -129,6 +132,7 @@ export class EaselComponent implements OnInit, OnDestroy {
 
       if (image) {
         this.imageTitle.set(image.title || 'Untitled');
+        this.selectedCategory.set(image.category_id);
         // Default to raw image
         this.imageUrl.set(this.supabase.getPublicUrl(image.raw_path));
         // Restore grid settings
@@ -173,6 +177,28 @@ export class EaselComponent implements OnInit, OnDestroy {
     const image = this.supabase.currentImage();
     if (image) {
       this.imageUrl.set(this.supabase.getPublicUrl(image.raw_path));
+    }
+  }
+
+  async deleteLayer(event: Event, layerId: string) {
+    event.stopPropagation();
+
+    const layer = this.layers().find(l => l.id === layerId);
+    if (!layer) return;
+
+    const confirmed = confirm(`Delete layer "${layer.type} (${layer.param_value})"?`);
+    if (!confirmed) return;
+
+    try {
+      await this.supabase.deleteLayer(layerId);
+      this.layers.update(layers => layers.filter(l => l.id !== layerId));
+
+      // If deleted layer was selected, show raw image
+      if (this.selectedLayerId() === layerId) {
+        this.showRawImage();
+      }
+    } catch (e) {
+      this.error.set('Failed to delete layer');
     }
   }
 
@@ -282,6 +308,33 @@ export class EaselComponent implements OnInit, OnDestroy {
         this.gridRows(),
         this.gridCols()
       );
+    } catch (e) {
+      // Error already set in service
+    }
+  }
+
+  // Update category
+  async updateCategory(categoryId: string) {
+    if (!this.currentImageId) return;
+
+    this.selectedCategory.set(categoryId);
+    try {
+      await this.supabase.updateImageCategory(this.currentImageId, categoryId);
+    } catch (e) {
+      // Error already set in service
+    }
+  }
+
+  // Update title
+  async updateTitle(title: string) {
+    if (!this.currentImageId) return;
+
+    const trimmed = title.trim();
+    if (trimmed === this.imageTitle()) return;
+
+    this.imageTitle.set(trimmed || 'Untitled');
+    try {
+      await this.supabase.updateImageTitle(this.currentImageId, trimmed);
     } catch (e) {
       // Error already set in service
     }

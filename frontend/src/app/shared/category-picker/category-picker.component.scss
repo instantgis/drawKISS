@@ -1,0 +1,48 @@
+.category-picker {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-sm);
+  align-items: center;
+}
+
+.chip {
+  padding: var(--space-xs) var(--space-md);
+  border-radius: 1rem;
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-text);
+  font-size: var(--font-size-sm);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.chip:hover {
+  background: var(--color-surface-hover);
+}
+
+.chip.active {
+  background: var(--color-primary);
+  color: white;
+  border-color: var(--color-primary);
+}
+
+.chip-add {
+  font-weight: bold;
+  min-width: 2rem;
+}
+
+.chip-confirm {
+  background: var(--color-success);
+  color: white;
+  border-color: var(--color-success);
+}
+
+.chip-input {
+  padding: var(--space-xs) var(--space-md);
+  border-radius: 1rem;
+  border: 1px solid var(--color-primary);
+  font-size: var(--font-size-sm);
+  width: 8rem;
+  outline: none;
+}
+

@@ -49,6 +49,14 @@
           </div>
         }
       </div>
+
+      @if (hasMore()) {
+        <div class="load-more">
+          <button class="btn btn-secondary" (click)="loadMore()" [disabled]="isLoadingMore()">
+            {{ isLoadingMore() ? 'Loading...' : 'Load More' }}
+          </button>
+        </div>
+      }
     }
   }
 </div>

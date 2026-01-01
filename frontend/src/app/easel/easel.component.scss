@@ -41,6 +41,29 @@
   margin-right: auto;
 }
 
+.toolbar-title-input {
+  font-weight: 600;
+  font-size: 1rem;
+  margin-right: auto;
+  padding: var(--space-xs) var(--space-sm);
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--color-text);
+  min-width: 150px;
+  max-width: 300px;
+
+  &:hover {
+    border-color: var(--color-border);
+  }
+
+  &:focus {
+    outline: none;
+    border-color: var(--color-primary);
+    background: var(--color-surface);
+  }
+}
+
 .toolbar-group {
   display: flex;
   align-items: center;
@@ -125,6 +148,33 @@
   background: var(--color-primary);
   color: white;
   border-color: var(--color-primary);
+}
+
+.layer-chip-wrapper {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
+.layer-delete {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: none;
+  background: var(--color-danger);
+  color: white;
+  font-size: 12px;
+  line-height: 1;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.layer-chip-wrapper:hover .layer-delete {
+  opacity: 1;
 }
 
 .canvas-area {

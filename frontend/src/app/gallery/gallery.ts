@@ -12,10 +12,14 @@ export class Gallery implements OnInit {
   private supabase = inject(SupabaseService);
   private router = inject(Router);
 
+  private readonly PAGE_SIZE = 20;
+
   images = signal<ImageRow[]>([]);
   categories = signal<CategoryRow[]>([]);
   selectedCategory = signal<string | null>(null);
   isLoading = signal(false);
+  isLoadingMore = signal(false);
+  hasMore = signal(false);
 
   filteredImages = computed(() => {
     const catId = this.selectedCategory();
@@ -31,19 +35,49 @@ export class Gallery implements OnInit {
   async loadData() {
     this.isLoading.set(true);
     try {
-      const [images, categories] = await Promise.all([
-        this.supabase.getAllImages(),
+      const [imageResult, categories] = await Promise.all([
+        this.supabase.getImages({ limit: this.PAGE_SIZE }),
         this.supabase.getCategories()
       ]);
-      this.images.set(images);
+      this.images.set(imageResult.images);
+      this.hasMore.set(imageResult.hasMore);
       this.categories.set(categories);
     } finally {
       this.isLoading.set(false);
     }
   }
 
-  selectCategory(categoryId: string | null) {
+  async loadMore() {
+    if (this.isLoadingMore() || !this.hasMore()) return;
+
+    this.isLoadingMore.set(true);
+    try {
+      const result = await this.supabase.getImages({
+        categoryId: this.selectedCategory() ?? undefined,
+        limit: this.PAGE_SIZE,
+        offset: this.images().length
+      });
+      this.images.update(imgs => [...imgs, ...result.images]);
+      this.hasMore.set(result.hasMore);
+    } finally {
+      this.isLoadingMore.set(false);
+    }
+  }
+
+  async selectCategory(categoryId: string | null) {
     this.selectedCategory.set(categoryId);
+    // Reload from start when category changes
+    this.isLoading.set(true);
+    try {
+      const result = await this.supabase.getImages({
+        categoryId: categoryId ?? undefined,
+        limit: this.PAGE_SIZE
+      });
+      this.images.set(result.images);
+      this.hasMore.set(result.hasMore);
+    } finally {
+      this.isLoading.set(false);
+    }
   }
 
   openImage(imageId: string) {

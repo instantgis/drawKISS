@@ -1,0 +1,25 @@
+<div class="category-picker">
+  @for (cat of categories(); track cat.id) {
+    <button
+      type="button"
+      class="chip"
+      [class.active]="selectedId() === cat.id"
+      (click)="select(cat.id)">
+      {{ cat.name }}
+    </button>
+  }
+
+  @if (isCreating()) {
+    <input
+      class="chip-input"
+      [(ngModel)]="newName"
+      (keydown.enter)="createCategory()"
+      (keydown.escape)="cancelCreate()"
+      (blur)="onBlur()"
+      placeholder="Name..." />
+    <button type="button" class="chip chip-confirm" (click)="createCategory()">✓</button>
+  } @else {
+    <button type="button" class="chip chip-add" (click)="startCreate()">+</button>
+  }
+</div>
+

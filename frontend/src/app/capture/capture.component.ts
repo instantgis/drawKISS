@@ -3,6 +3,7 @@ import { TitleCasePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ImageProcessorService, LayerType } from '../image-processor.service';
 import { SupabaseService, ImageRow, LayerRow } from '../supabase.service';
+import { CategoryPickerComponent } from '../shared/category-picker/category-picker.component';
 
 type Mode = 'capture' | 'edit';
 
@@ -10,7 +11,7 @@ type Mode = 'capture' | 'edit';
   selector: 'app-capture',
   templateUrl: './capture.component.html',
   styleUrl: './capture.component.scss',
-  imports: [TitleCasePipe, FormsModule]
+  imports: [TitleCasePipe, FormsModule, CategoryPickerComponent]
 })
 export class CaptureComponent implements OnDestroy {
   private processor = inject(ImageProcessorService);
@@ -32,6 +33,9 @@ export class CaptureComponent implements OnDestroy {
   // Title input for the image
   imageTitle = signal('');
 
+  // Selected category
+  selectedCategory = signal<string | null>(null);
+
   // Saved image reference (after saving raw)
   savedImage = signal<ImageRow | null>(null);
 
@@ -44,6 +48,7 @@ export class CaptureComponent implements OnDestroy {
   // Layer type and param for preview
   layerType = signal<LayerType>('posterize');
   paramValue = signal(4);
+  layerSaved = signal(false); // Track if current preview was saved
 
   // Available layer types
   layerTypes: LayerType[] = ['posterize', 'edges', 'blur', 'threshold'];
@@ -156,11 +161,13 @@ export class CaptureComponent implements OnDestroy {
   setLayerType(type: LayerType) {
     this.layerType.set(type);
     this.paramValue.set(this.processor.getDefaultParam(type));
+    this.layerSaved.set(false);
     if (this.rawBlob) this.processImage();
   }
 
   setParamValue(value: number) {
     this.paramValue.set(value);
+    this.layerSaved.set(false);
     if (this.rawBlob) this.processImage();
   }
 
@@ -175,13 +182,14 @@ export class CaptureComponent implements OnDestroy {
     if (!this.rawBlob) return;
 
     const title = this.imageTitle().trim() || `Capture ${new Date().toLocaleDateString()}`;
+    const categoryId = this.selectedCategory();
 
     this.processing.set(true);
     this.error.set(null);
     this.successMessage.set(null);
 
     try {
-      const image = await this.supabase.uploadRawImage(this.rawBlob, title);
+      const image = await this.supabase.uploadRawImage(this.rawBlob, title, categoryId);
       this.savedImage.set(image);
       this.successMessage.set('Image saved! Now add layers with different filters.');
     } catch (err) {
@@ -218,6 +226,7 @@ export class CaptureComponent implements OnDestroy {
 
       // Add to saved layers list
       this.savedLayers.update(layers => [...layers, layer]);
+      this.layerSaved.set(true);
       this.successMessage.set(`Layer added: ${this.layerType()} (${this.paramValue()})`);
     } catch (err) {
       this.error.set('Failed to add layer');

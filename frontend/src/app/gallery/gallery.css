@@ -138,3 +138,9 @@
   font-size: var(--font-size-xs, 0.7rem);
   color: var(--color-text-muted);
 }
+
+.load-more {
+  display: flex;
+  justify-content: center;
+  padding: var(--space-lg) 0;
+}

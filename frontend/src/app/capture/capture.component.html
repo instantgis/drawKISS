@@ -55,6 +55,16 @@
             [disabled]="isImageSaved()" />
         </div>
 
+        <!-- Category picker -->
+        @if (!isImageSaved()) {
+          <div class="category-input">
+            <label>Category</label>
+            <app-category-picker
+              [selectedId]="selectedCategory()"
+              (selectedChange)="selectedCategory.set($event)" />
+          </div>
+        }
+
         <!-- Save raw or status -->
         @if (!isImageSaved()) {
           <div class="action-row">
@@ -103,19 +113,17 @@
                    (input)="setParamValue(+$any($event.target).value)" />
           </div>
 
-          <button class="btn btn-secondary" (click)="processImage()" [disabled]="processing()">
-            Preview
-          </button>
-
           <!-- Layer preview -->
           @if (processedImageUrl()) {
             <div class="media-frame small">
               <img [src]="processedImageUrl()" alt="Layer preview" />
             </div>
             <div class="action-row">
-              <button class="btn btn-primary" (click)="addLayer()" [disabled]="processing()">
+              <button class="btn btn-primary" (click)="addLayer()" [disabled]="processing() || layerSaved()">
                 @if (processing()) {
                   <span class="spinner"></span>
+                } @else if (layerSaved()) {
+                  ✓ Saved
                 } @else {
                   Save Layer
                 }
