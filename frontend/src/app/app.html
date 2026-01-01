@@ -1,7 +1,14 @@
 <nav class="app-nav">
-  <a routerLink="/gallery" routerLinkActive="active">Gallery</a>
-  <a routerLink="/capture" routerLinkActive="active">Capture</a>
+  @if (supabase.currentUser()) {
+    <a routerLink="/gallery" routerLinkActive="active">Gallery</a>
+    <a routerLink="/capture" routerLinkActive="active">Capture</a>
+  }
   <a routerLink="/about" routerLinkActive="active">About</a>
+  @if (supabase.currentUser()) {
+    <button class="logout-btn" (click)="logout()">Logout</button>
+  } @else {
+    <a routerLink="/login" routerLinkActive="active" class="login-link">Login</a>
+  }
 </nav>
 
 <main class="app-main">

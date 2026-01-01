@@ -1,5 +1,5 @@
 import { Injectable, signal } from '@angular/core';
-import { createClient, SupabaseClient } from '@supabase/supabase-js';
+import { createClient, SupabaseClient, User, Session } from '@supabase/supabase-js';
 import { environment } from '../environments/environment';
 import { Database } from '../types/drawkiss';
 
@@ -14,11 +14,15 @@ export type CategoryRow = Database['drawkiss']['Tables']['categories']['Row'];
 })
 export class SupabaseService {
   private supabase: SupabaseClient<Database>;
-  
+
+  // Auth state
+  currentUser = signal<User | null>(null);
+  session = signal<Session | null>(null);
+
   // Current image being edited
   currentImage = signal<ImageRow | null>(null);
   currentLayers = signal<LayerRow[]>([]);
-  
+
   // Loading states
   isLoading = signal(false);
   error = signal<string | null>(null);
@@ -28,6 +32,49 @@ export class SupabaseService {
       environment.supabaseUrl,
       environment.supabaseAnonKey
     );
+
+    // Initialize auth state
+    this.supabase.auth.getSession().then(({ data: { session } }) => {
+      this.session.set(session);
+      this.currentUser.set(session?.user ?? null);
+    });
+
+    // Listen for auth changes
+    this.supabase.auth.onAuthStateChange((_event, session) => {
+      this.session.set(session);
+      this.currentUser.set(session?.user ?? null);
+    });
+  }
+
+  /**
+   * Sign in with email and password.
+   */
+  async signIn(email: string, password: string): Promise<void> {
+    const { error } = await this.supabase.auth.signInWithPassword({ email, password });
+    if (error) throw error;
+  }
+
+  /**
+   * Sign up with email and password.
+   */
+  async signUp(email: string, password: string): Promise<void> {
+    const { error } = await this.supabase.auth.signUp({ email, password });
+    if (error) throw error;
+  }
+
+  /**
+   * Sign out.
+   */
+  async signOut(): Promise<void> {
+    const { error } = await this.supabase.auth.signOut();
+    if (error) throw error;
+  }
+
+  /**
+   * Get current user ID (for inserts).
+   */
+  getUserId(): string | null {
+    return this.currentUser()?.id ?? null;
   }
 
   /**
@@ -38,8 +85,11 @@ export class SupabaseService {
     this.error.set(null);
 
     try {
+      const userId = this.getUserId();
+      if (!userId) throw new Error('Must be logged in to upload');
+
       const id = crypto.randomUUID();
-      const rawPath = `raw/${id}.png`;
+      const rawPath = `${userId}/raw/${id}.png`;
 
       // Upload to storage
       const { error: uploadError } = await this.supabase.storage
@@ -54,6 +104,7 @@ export class SupabaseService {
       // Create database record
       const imageData: ImageInsert = {
         id,
+        user_id: userId,
         raw_path: rawPath,
         title: title || `Capture ${new Date().toLocaleDateString()}`,
         date_taken: new Date().toISOString(),
@@ -92,25 +143,29 @@ export class SupabaseService {
     name?: string
   ): Promise<LayerRow> {
     this.isLoading.set(true);
-    
+
     try {
+      const userId = this.getUserId();
+      if (!userId) throw new Error('Must be logged in to upload');
+
       const id = crypto.randomUUID();
-      const storagePath = `layers/${id}.png`;
-      
+      const storagePath = `${userId}/layers/${id}.png`;
+
       // Upload to storage
       const { error: uploadError } = await this.supabase.storage
         .from('drawkiss')
         .upload(storagePath, file, { contentType: 'image/png' });
-      
+
       if (uploadError) throw uploadError;
-      
+
       // Get current layer count for ordering
       const currentLayers = this.currentLayers();
       const maxOrder = currentLayers.reduce((max, l) => Math.max(max, l.layer_order || 0), 0);
-      
+
       // Create database record
       const layerData: LayerInsert = {
         id,
+        user_id: userId,
         image_id: imageId,
         storage_path: storagePath,
         type,
@@ -143,26 +198,39 @@ export class SupabaseService {
   }
 
   /**
-   * Get public URL for a storage path.
+   * Get signed URL for a storage path (private bucket).
+   * URLs expire after 1 hour.
    */
-  getPublicUrl(path: string): string {
-    const { data } = this.supabase.storage.from('drawkiss').getPublicUrl(path);
-    return data.publicUrl;
+  async getSignedUrl(path: string): Promise<string> {
+    const { data, error } = await this.supabase.storage
+      .from('drawkiss')
+      .createSignedUrl(path, 3600); // 1 hour expiry
+    if (error || !data) {
+      console.error('Failed to get signed URL:', error);
+      return '';
+    }
+    return data.signedUrl;
   }
 
   /**
-   * Get thumbnail URL using Supabase image transformations.
-   * Requires Pro Plan. Falls back to raw image if transforms not available.
+   * Get signed thumbnail URL using Supabase image transformations.
+   * URLs expire after 1 hour.
    */
-  getThumbnailUrl(path: string, width = 300, height = 225): string {
-    const { data } = this.supabase.storage.from('drawkiss').getPublicUrl(path, {
-      transform: {
-        width,
-        height,
-        resize: 'cover'
-      }
-    });
-    return data.publicUrl;
+  async getSignedThumbnailUrl(path: string, width = 300, height = 225): Promise<string> {
+    const { data, error } = await this.supabase.storage
+      .from('drawkiss')
+      .createSignedUrl(path, 3600, {
+        transform: {
+          width,
+          height,
+          resize: 'cover'
+        }
+      });
+    if (error || !data) {
+      console.error('Failed to get signed thumbnail URL:', error);
+      return '';
+    }
+    return data.signedUrl;
   }
 
   /**
@@ -301,10 +369,13 @@ export class SupabaseService {
    */
   async createCategory(name: string): Promise<CategoryRow> {
     try {
+      const userId = this.getUserId();
+      if (!userId) throw new Error('Must be logged in to create category');
+
       const { data, error } = await this.supabase
         .schema('drawkiss')
         .from('categories')
-        .insert({ name })
+        .insert({ name, user_id: userId })
         .select()
         .single();
 

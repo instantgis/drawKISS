@@ -21,6 +21,9 @@ export class Gallery implements OnInit {
   isLoadingMore = signal(false);
   hasMore = signal(false);
 
+  // Cache for signed thumbnail URLs
+  thumbnailUrls = signal<Map<string, string>>(new Map());
+
   filteredImages = computed(() => {
     const catId = this.selectedCategory();
     const allImages = this.images();
@@ -42,9 +45,25 @@ export class Gallery implements OnInit {
       this.images.set(imageResult.images);
       this.hasMore.set(imageResult.hasMore);
       this.categories.set(categories);
+
+      // Pre-load signed thumbnail URLs
+      await this.loadThumbnailUrls(imageResult.images);
     } finally {
       this.isLoading.set(false);
     }
+  }
+
+  private async loadThumbnailUrls(images: ImageRow[]) {
+    const urls = new Map(this.thumbnailUrls());
+    await Promise.all(
+      images.map(async (img) => {
+        if (!urls.has(img.id)) {
+          const url = await this.supabase.getSignedThumbnailUrl(img.raw_path, 200, 150);
+          urls.set(img.id, url);
+        }
+      })
+    );
+    this.thumbnailUrls.set(urls);
   }
 
   async loadMore() {
@@ -59,6 +78,9 @@ export class Gallery implements OnInit {
       });
       this.images.update(imgs => [...imgs, ...result.images]);
       this.hasMore.set(result.hasMore);
+
+      // Load thumbnail URLs for new images
+      await this.loadThumbnailUrls(result.images);
     } finally {
       this.isLoadingMore.set(false);
     }
@@ -85,8 +107,8 @@ export class Gallery implements OnInit {
   }
 
   getThumbnailUrl(image: ImageRow): string {
-    // Use Supabase image transformations for thumbnails
-    return this.supabase.getThumbnailUrl(image.raw_path, 200, 150);
+    // Return cached signed URL
+    return this.thumbnailUrls().get(image.id) || '';
   }
 
   formatDate(dateStr: string | null): string {

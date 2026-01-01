@@ -6,14 +6,18 @@
     <section>
       <h2>Why I Built This</h2>
       <p>
-        I'm a developer and traditional artist based in Mauritius. I work with pencils (5H to 14B) 
-        and Indian ink, creating urban sketches, botanical illustrations, and visual stories 
+        I'm a developer and traditional artist based in Mauritius. I work with pencils (5H to 14B)
+        and Indian ink, creating urban sketches, botanical illustrations, and visual stories
         about my island home.
       </p>
       <p>
-        Being color blind, I've embraced achromatic art—focusing on light, form, and the 
+        Being color blind, I've embraced achromatic art—focusing on light, form, and the
         texture that only hand-drawn cross-hatching can provide.
       </p>
+      <figure class="artwork">
+        <img src="./assets/drawings/mango.webp" alt="Mango illustration" />
+        <figcaption>Botanical study in pencil</figcaption>
+      </figure>
     </section>
 
     <section>
@@ -51,8 +55,13 @@
     </section>
 
     <div class="cta">
-      <a routerLink="/capture" class="btn btn-primary">Start Drawing</a>
-      <a routerLink="/gallery" class="btn btn-secondary">View Gallery</a>
+      @if (isLoggedIn()) {
+        <a routerLink="/capture" class="btn btn-primary">Start Drawing</a>
+        <a routerLink="/gallery" class="btn btn-secondary">View Gallery</a>
+      } @else {
+        <p class="cta-text">Ready to simplify your workflow?</p>
+        <a routerLink="/login" class="btn btn-primary">Sign Up Free</a>
+      }
     </div>
   </div>
 </div>

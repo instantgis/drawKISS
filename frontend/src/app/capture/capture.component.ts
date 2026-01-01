@@ -241,13 +241,15 @@ export class CaptureComponent implements OnDestroy {
     this.layerType.set(type);
     this.paramValue.set(this.processor.getDefaultParam(type));
     this.layerSaved.set(false);
-    if (this.rawBlob) this.processImage();
+    // Clear old preview when filter type changes
+    const oldUrl = this.processedImageUrl();
+    if (oldUrl) URL.revokeObjectURL(oldUrl);
+    this.processedImageUrl.set(null);
   }
 
   setParamValue(value: number) {
     this.paramValue.set(value);
     this.layerSaved.set(false);
-    if (this.rawBlob) this.processImage();
   }
 
   getParamRange() {

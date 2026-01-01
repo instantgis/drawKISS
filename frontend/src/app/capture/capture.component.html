@@ -129,6 +129,17 @@
                    (input)="setParamValue(+$any($event.target).value)" />
           </div>
 
+          <!-- Preview button -->
+          <div class="action-row">
+            <button class="btn btn-secondary" (click)="processImage()" [disabled]="processing()">
+              @if (processing()) {
+                <span class="spinner"></span> Processing...
+              } @else {
+                Preview Filter
+              }
+            </button>
+          </div>
+
           <!-- Layer preview -->
           @if (processedImageUrl()) {
             <div class="media-frame small">
@@ -136,9 +147,7 @@
             </div>
             <div class="action-row">
               <button class="btn btn-primary" (click)="addLayer()" [disabled]="processing() || layerSaved()">
-                @if (processing()) {
-                  <span class="spinner"></span>
-                } @else if (layerSaved()) {
+                @if (layerSaved()) {
                   ✓ Saved
                 } @else {
                   Save Layer

@@ -31,3 +31,7 @@ build/
 
 # Local Netlify folder
 .netlify
+
+# VPS config files
+Caddyfile
+Caddyfile.*

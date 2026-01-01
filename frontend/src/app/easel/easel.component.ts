@@ -133,8 +133,9 @@ export class EaselComponent implements OnInit, OnDestroy {
       if (image) {
         this.imageTitle.set(image.title || 'Untitled');
         this.selectedCategory.set(image.category_id);
-        // Default to raw image
-        this.imageUrl.set(this.supabase.getPublicUrl(image.raw_path));
+        // Default to raw image (signed URL for private bucket)
+        const signedUrl = await this.supabase.getSignedUrl(image.raw_path);
+        this.imageUrl.set(signedUrl);
         // Restore grid settings
         this.gridRows.set(image.grid_rows ?? 5);
         this.gridCols.set(image.grid_cols ?? 5);
@@ -145,7 +146,7 @@ export class EaselComponent implements OnInit, OnDestroy {
       // If there are layers, select the first visible one
       const visibleLayer = layers.find(l => l.visible);
       if (visibleLayer) {
-        this.selectLayer(visibleLayer.id);
+        await this.selectLayer(visibleLayer.id);
       }
     } catch (e) {
       this.error.set('Failed to load image');
@@ -154,13 +155,14 @@ export class EaselComponent implements OnInit, OnDestroy {
     }
   }
 
-  selectLayer(layerId: string | null) {
+  async selectLayer(layerId: string | null) {
     this.selectedLayerId.set(layerId);
 
     if (layerId) {
       const layer = this.layers().find(l => l.id === layerId);
       if (layer) {
-        this.imageUrl.set(this.supabase.getPublicUrl(layer.storage_path));
+        const signedUrl = await this.supabase.getSignedUrl(layer.storage_path);
+        this.imageUrl.set(signedUrl);
         return;
       }
     }
@@ -168,15 +170,17 @@ export class EaselComponent implements OnInit, OnDestroy {
     // Fall back to raw image
     const image = this.supabase.currentImage();
     if (image) {
-      this.imageUrl.set(this.supabase.getPublicUrl(image.raw_path));
+      const signedUrl = await this.supabase.getSignedUrl(image.raw_path);
+      this.imageUrl.set(signedUrl);
     }
   }
 
-  showRawImage() {
+  async showRawImage() {
     this.selectedLayerId.set(null);
     const image = this.supabase.currentImage();
     if (image) {
-      this.imageUrl.set(this.supabase.getPublicUrl(image.raw_path));
+      const signedUrl = await this.supabase.getSignedUrl(image.raw_path);
+      this.imageUrl.set(signedUrl);
     }
   }
 
