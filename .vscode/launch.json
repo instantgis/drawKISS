@@ -1,0 +1,13 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Open Frontend",
+      "type": "chrome",
+      "request": "launch",
+      "preLaunchTask": "Start All",
+      "url": "http://localhost:4200"
+    }
+  ]
+}
+

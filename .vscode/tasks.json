@@ -1,0 +1,59 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "backend:serve",
+      "type": "shell",
+      "command": "C:\\Users\\alain\\miniconda3\\envs\\drawkiss\\python.exe",
+      "args": ["-m", "uvicorn", "main:app", "--reload", "--port", "8000"],
+      "options": {
+        "cwd": "${workspaceFolder}/backend"
+      },
+      "isBackground": true,
+      "problemMatcher": {
+        "pattern": {
+          "regexp": "^$"
+        },
+        "background": {
+          "activeOnStart": true,
+          "beginsPattern": "^INFO:.*Uvicorn running",
+          "endsPattern": "^INFO:.*Application startup complete"
+        }
+      },
+      "presentation": {
+        "reveal": "always",
+        "panel": "new",
+        "group": "drawkiss"
+      }
+    },
+    {
+      "label": "frontend:serve",
+      "type": "npm",
+      "script": "start",
+      "path": "frontend",
+      "isBackground": true,
+      "problemMatcher": {
+        "pattern": {
+          "regexp": "^$"
+        },
+        "background": {
+          "activeOnStart": true,
+          "beginsPattern": "Building...",
+          "endsPattern": "Application bundle generation complete"
+        }
+      },
+      "presentation": {
+        "reveal": "always",
+        "panel": "new",
+        "group": "drawkiss"
+      }
+    },
+    {
+      "label": "Start All",
+      "dependsOn": ["backend:serve", "frontend:serve"],
+      "dependsOrder": "parallel",
+      "problemMatcher": []
+    }
+  ]
+}
+
