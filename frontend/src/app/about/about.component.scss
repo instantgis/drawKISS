@@ -44,6 +44,15 @@ section p strong {
   color: var(--color-text);
 }
 
+section ul {
+  margin: var(--space-sm) 0 var(--space-md) var(--space-lg);
+  color: var(--color-muted);
+
+  li {
+    margin-bottom: var(--space-xs);
+  }
+}
+
 .artwork {
   margin: var(--space-lg) 0;
   text-align: center;
