@@ -2,6 +2,18 @@
 
 This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 21.0.4.
 
+## Code Style Preferences
+
+- **Separate files**: Always use separate `.html`, `.scss`, `.ts` files (no inline templates/styles)
+- **Design tokens**: Use CSS custom properties from `styles.css` for colors, spacing, typography
+- **Angular 21 modern patterns**:
+  - Signals (not RxJS for component state)
+  - Zoneless change detection
+  - Standalone components (no NgModules)
+  - Lazy-loaded routes
+  - New control flow syntax (`@if`, `@for`, `@switch`)
+  - `inject()` function (not constructor injection)
+
 ## Development server
 
 To start a local development server, run:

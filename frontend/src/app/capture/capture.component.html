@@ -1,0 +1,143 @@
+<div class="capture-container">
+
+  <header class="capture-header">
+    <h1>drawKISS</h1>
+  </header>
+
+  <!-- Messages -->
+  @if (error()) {
+    <div class="message-banner error">{{ error() }}</div>
+  }
+  @if (successMessage()) {
+    <div class="message-banner success">{{ successMessage() }}</div>
+  }
+
+  <canvas #canvasEl class="hidden"></canvas>
+
+  <!-- ========== CAPTURE MODE ========== -->
+  @if (mode() === 'capture') {
+    <div class="media-frame">
+      @if (!cameraActive()) {
+        <p class="placeholder-text">Camera preview will appear here</p>
+      }
+      <video #videoEl [class.hidden]="!cameraActive()" autoplay playsinline muted></video>
+    </div>
+
+    <div class="controls">
+      @if (!cameraActive()) {
+        <button class="btn btn-primary btn-lg" (click)="startCamera()">Start Camera</button>
+      } @else {
+        <button class="btn btn-primary btn-icon" (click)="capture()" [disabled]="processing()">Capture</button>
+        <button class="btn btn-secondary" (click)="stopCamera()">Stop</button>
+      }
+    </div>
+  }
+
+  <!-- ========== EDIT MODE ========== -->
+  @if (mode() === 'edit') {
+    <div class="edit-layout">
+      <!-- Left: Raw image preview -->
+      <div class="raw-panel">
+        <h2>Raw Capture</h2>
+        <div class="media-frame small">
+          <img [src]="rawImageUrl()" alt="Raw capture" />
+        </div>
+
+        <!-- Title input -->
+        <div class="title-input">
+          <label for="imageTitle">Title</label>
+          <input
+            id="imageTitle"
+            type="text"
+            [ngModel]="imageTitle()"
+            (ngModelChange)="imageTitle.set($event)"
+            placeholder="Enter image title..."
+            [disabled]="isImageSaved()" />
+        </div>
+
+        <!-- Save raw or status -->
+        @if (!isImageSaved()) {
+          <div class="action-row">
+            <button class="btn btn-primary" (click)="saveRawImage()" [disabled]="processing()">
+              @if (processing()) {
+                <span class="spinner"></span> Saving...
+              } @else {
+                Save to Gallery
+              }
+            </button>
+            <button class="btn btn-danger" (click)="discard()">Discard</button>
+          </div>
+        } @else {
+          <div class="saved-status">
+            Saved: {{ savedImage()?.title }}
+          </div>
+          <div class="action-row">
+            <button class="btn btn-secondary" (click)="discard()">New Capture</button>
+          </div>
+        }
+      </div>
+
+      <!-- Right: Layer editor -->
+      <div class="layer-panel">
+        <h2>Add Layers</h2>
+
+        @if (!isImageSaved()) {
+          <p class="hint">Save the image first to add layers</p>
+        } @else {
+          <!-- Filter controls -->
+          <div class="option-group">
+            <label>Filter</label>
+            <select [value]="layerType()" (change)="setLayerType($any($event.target).value)">
+              @for (type of layerTypes; track type) {
+                <option [value]="type">{{ type | titlecase }}</option>
+              }
+            </select>
+          </div>
+
+          <div class="option-group">
+            <label>{{ getParamRange().label }}: {{ paramValue() }}</label>
+            <input type="range"
+                   [min]="getParamRange().min"
+                   [max]="getParamRange().max"
+                   [value]="paramValue()"
+                   (input)="setParamValue(+$any($event.target).value)" />
+          </div>
+
+          <button class="btn btn-secondary" (click)="processImage()" [disabled]="processing()">
+            Preview
+          </button>
+
+          <!-- Layer preview -->
+          @if (processedImageUrl()) {
+            <div class="media-frame small">
+              <img [src]="processedImageUrl()" alt="Layer preview" />
+            </div>
+            <div class="action-row">
+              <button class="btn btn-primary" (click)="addLayer()" [disabled]="processing()">
+                @if (processing()) {
+                  <span class="spinner"></span>
+                } @else {
+                  Save Layer
+                }
+              </button>
+            </div>
+          }
+
+          <!-- Saved layers list -->
+          @if (savedLayers().length > 0) {
+            <div class="saved-layers">
+              <h3>Saved Layers ({{ savedLayers().length }})</h3>
+              <ul>
+                @for (layer of savedLayers(); track layer.id) {
+                  <li>{{ layer.type | titlecase }} ({{ layer.param_value }})</li>
+                }
+              </ul>
+            </div>
+          }
+        }
+      </div>
+    </div>
+  }
+
+</div>
+

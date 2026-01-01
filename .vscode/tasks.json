@@ -16,13 +16,13 @@
         },
         "background": {
           "activeOnStart": true,
-          "beginsPattern": "^INFO:.*Uvicorn running",
-          "endsPattern": "^INFO:.*Application startup complete"
+          "beginsPattern": ".",
+          "endsPattern": "Application startup complete"
         }
       },
       "presentation": {
         "reveal": "always",
-        "panel": "new",
+        "panel": "dedicated",
         "group": "drawkiss"
       }
     },
@@ -38,13 +38,13 @@
         },
         "background": {
           "activeOnStart": true,
-          "beginsPattern": "Building...",
-          "endsPattern": "Application bundle generation complete"
+          "beginsPattern": ".",
+          "endsPattern": "localhost:4200"
         }
       },
       "presentation": {
         "reveal": "always",
-        "panel": "new",
+        "panel": "dedicated",
         "group": "drawkiss"
       }
     },
@@ -53,6 +53,42 @@
       "dependsOn": ["backend:serve", "frontend:serve"],
       "dependsOrder": "parallel",
       "problemMatcher": []
+    },
+    {
+      "label": "netlify:dev",
+      "type": "shell",
+      "command": "netlify",
+      "args": ["dev"],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "isBackground": true,
+      "problemMatcher": {
+        "pattern": {
+          "regexp": "^$"
+        },
+        "background": {
+          "activeOnStart": true,
+          "beginsPattern": ".",
+          "endsPattern": "localhost:8888"
+        }
+      },
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "group": "drawkiss"
+      }
+    },
+    {
+      "label": "frontend:build",
+      "type": "npm",
+      "script": "build",
+      "path": "frontend",
+      "problemMatcher": ["$tsc"],
+      "presentation": {
+        "reveal": "silent",
+        "panel": "shared"
+      }
     }
   ]
 }

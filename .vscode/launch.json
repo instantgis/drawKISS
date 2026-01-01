@@ -2,10 +2,24 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "name": "Open Frontend",
+      "name": "Full Stack (Backend + Frontend)",
       "type": "chrome",
       "request": "launch",
       "preLaunchTask": "Start All",
+      "url": "http://localhost:4200"
+    },
+    {
+      "name": "Netlify Dev (Production Preview)",
+      "type": "chrome",
+      "request": "launch",
+      "preLaunchTask": "netlify:dev",
+      "url": "http://localhost:8888"
+    },
+    {
+      "name": "Frontend Only (no backend)",
+      "type": "chrome",
+      "request": "launch",
+      "preLaunchTask": "frontend:serve",
       "url": "http://localhost:4200"
     }
   ]

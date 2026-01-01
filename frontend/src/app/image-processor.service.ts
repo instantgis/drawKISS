@@ -1,37 +1,81 @@
-import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Injectable, signal } from '@angular/core';
+import { environment } from '../environments/environment';
 
-export interface ProcessingOptions {
-  levels: number;
-  blur_radius: number;
-  threshold: number;
-  mode: 'posterize' | 'edges' | 'both';
+export type LayerType = 'posterize' | 'edges' | 'blur' | 'threshold';
+
+export interface ProcessingRequest {
+  type: LayerType;
+  param_value: number;
 }
 
 @Injectable({
   providedIn: 'root'
 })
 export class ImageProcessorService {
-  private apiUrl = 'http://localhost:8000';
+  private apiUrl = environment.apiUrl;
 
-  constructor(private http: HttpClient) {}
+  // Processing state
+  isProcessing = signal(false);
+  error = signal<string | null>(null);
 
-  processImage(file: Blob, options: ProcessingOptions): Observable<Blob> {
-    const formData = new FormData();
-    formData.append('file', file, 'capture.png');
-    formData.append('levels', options.levels.toString());
-    formData.append('blur_radius', options.blur_radius.toString());
-    formData.append('threshold', options.threshold.toString());
-    formData.append('mode', options.mode);
+  constructor() {}
 
-    return this.http.post(`${this.apiUrl}/process`, formData, {
-      responseType: 'blob'
-    });
+  /**
+   * Process an image with the specified filter.
+   * Returns the processed image as a Blob.
+   */
+  async processImage(file: Blob, request: ProcessingRequest): Promise<Blob> {
+    this.isProcessing.set(true);
+    this.error.set(null);
+
+    try {
+      const formData = new FormData();
+      formData.append('file', file, 'image.png');
+      formData.append('type', request.type);
+      formData.append('param_value', request.param_value.toString());
+
+      const response = await fetch(`${this.apiUrl}/process`, {
+        method: 'POST',
+        body: formData
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ error: 'Processing failed' }));
+        throw new Error(errorData.error || 'Processing failed');
+      }
+
+      return await response.blob();
+    } catch (e) {
+      const message = e instanceof Error ? e.message : 'Unknown error';
+      this.error.set(message);
+      throw e;
+    } finally {
+      this.isProcessing.set(false);
+    }
   }
 
-  checkHealth(): Observable<{ status: string; service: string }> {
-    return this.http.get<{ status: string; service: string }>(`${this.apiUrl}/health`);
+  /**
+   * Get default param value for a layer type.
+   */
+  getDefaultParam(type: LayerType): number {
+    switch (type) {
+      case 'posterize': return 4;    // levels 2-8
+      case 'edges': return 100;      // threshold 0-255
+      case 'blur': return 5;         // radius 1-21
+      case 'threshold': return 128;  // cutoff 0-255
+    }
+  }
+
+  /**
+   * Get param range for a layer type.
+   */
+  getParamRange(type: LayerType): { min: number; max: number; label: string } {
+    switch (type) {
+      case 'posterize': return { min: 2, max: 8, label: 'Levels' };
+      case 'edges': return { min: 0, max: 255, label: 'Threshold' };
+      case 'blur': return { min: 1, max: 21, label: 'Radius' };
+      case 'threshold': return { min: 0, max: 255, label: 'Cutoff' };
+    }
   }
 }
 

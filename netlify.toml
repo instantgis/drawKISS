@@ -1,0 +1,22 @@
+[build]
+  # Frontend build
+  base = "frontend"
+  publish = "dist/frontend/browser"
+  command = "npm run build"
+
+[functions]
+  # Python functions directory
+  directory = "netlify/functions"
+
+# Redirect API calls to functions
+[[redirects]]
+  from = "/api/*"
+  to = "/.netlify/functions/:splat"
+  status = 200
+
+# SPA fallback
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+

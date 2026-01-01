@@ -1,0 +1,74 @@
+<div class="easel-container">
+
+  <!-- Toolbar -->
+  <div class="toolbar">
+    <div class="toolbar-group">
+      <label>Rows: {{ gridRows() }}</label>
+      <input type="range" min="2" max="20" [value]="gridRows()" 
+             (input)="gridRows.set(+$any($event.target).value)" />
+    </div>
+
+    <div class="toolbar-group">
+      <label>Cols: {{ gridCols() }}</label>
+      <input type="range" min="2" max="20" [value]="gridCols()" 
+             (input)="gridCols.set(+$any($event.target).value)" />
+    </div>
+
+    <button class="btn btn-secondary" (click)="toggleGrid()">
+      {{ showGrid() ? 'Hide Grid' : 'Show Grid' }}
+    </button>
+
+    @if (selectedCell()) {
+      <button class="btn btn-secondary" (click)="clearSelection()">Clear Selection</button>
+    }
+  </div>
+
+  <!-- Main canvas area -->
+  <div class="canvas-area">
+    @if (error()) {
+      <div class="error-overlay">
+        <p>{{ error() }}</p>
+      </div>
+    }
+
+    @if (imageUrl()) {
+      <img [src]="imageUrl()" alt="Sketch reference" class="reference-image" />
+    } @else {
+      <div class="placeholder">
+        <p>No image loaded</p>
+        <p class="hint">Take a photo from the Capture page</p>
+      </div>
+    }
+
+    <!-- SVG Grid Overlay -->
+    @if (showGrid()) {
+      <svg class="grid-overlay" viewBox="0 0 100 100" preserveAspectRatio="none">
+        <!-- Clickable cells -->
+        @for (cell of cells(); track cell.row + '-' + cell.col) {
+          <rect
+            [attr.x]="cell.x"
+            [attr.y]="cell.y"
+            [attr.width]="cell.width"
+            [attr.height]="cell.height"
+            class="grid-cell"
+            [class.dimmed]="isCellDimmed(cell.row, cell.col)"
+            (click)="selectCell(cell.row, cell.col)"
+          />
+        }
+
+        <!-- Grid lines -->
+        @for (line of gridLines(); track line.x1 + '-' + line.y1 + '-' + line.x2 + '-' + line.y2) {
+          <line
+            [attr.x1]="line.x1 + '%'"
+            [attr.y1]="line.y1 + '%'"
+            [attr.x2]="line.x2 + '%'"
+            [attr.y2]="line.y2 + '%'"
+            class="grid-line"
+          />
+        }
+      </svg>
+    }
+  </div>
+
+</div>
+

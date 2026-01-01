@@ -45,23 +45,21 @@ async def health_check():
 @app.post("/process")
 async def process_image(
     file: UploadFile = File(...),
-    levels: int = Form(4),
-    blur_radius: int = Form(5),
-    threshold: int = Form(100),
-    mode: str = Form("posterize"),  # posterize, edges, both
-    invert: bool = Form(True),
+    type: str = Form("posterize"),  # posterize, edges, blur, threshold
+    param_value: int = Form(4),
 ):
     """
-    Process an image for sketching reference.
-    
+    Process an image with a single filter layer.
+
     Args:
         file: Input image
-        levels: Posterization levels (4 = 5H, 2B, 8B, 14B pencil mapping)
-        blur_radius: Gaussian blur kernel size (must be odd)
-        threshold: Canny edge detection threshold
-        mode: Output mode - 'posterize', 'edges', or 'both'
-        invert: If True, output is black on white (ink style)
-    
+        type: Filter type - 'posterize', 'edges', 'blur', 'threshold'
+        param_value: Parameter for the filter:
+            - posterize: levels (2-8)
+            - edges: threshold (0-255)
+            - blur: radius (1-21, odd)
+            - threshold: cutoff (0-255)
+
     Returns:
         Processed PNG image
     """
@@ -70,48 +68,49 @@ async def process_image(
         contents = await file.read()
         nparr = np.frombuffer(contents, np.uint8)
         img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
-        
+
         if img is None:
             raise HTTPException(status_code=400, detail="Invalid image file")
-        
-        # 1. Convert to grayscale
+
+        # Convert to grayscale
         gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-        
-        # 2. Apply Gaussian blur (kernel must be odd)
-        if blur_radius > 0:
-            blur_radius = blur_radius if blur_radius % 2 == 1 else blur_radius + 1
-            gray = cv2.GaussianBlur(gray, (blur_radius, blur_radius), 0)
-        
-        # 3. Posterization - reduce to N discrete gray levels
-        # Maps to pencil grades: 5H (lightest), 2B, 8B, 14B (darkest)
-        factor = 256 // levels
-        posterized = (gray // factor) * factor
-        
-        # 4. Edge detection (Canny)
-        edges = cv2.Canny(posterized, threshold, threshold * 2)
-        
-        # 5. Choose output based on mode
-        if mode == "posterize":
-            output = cv2.cvtColor(posterized, cv2.COLOR_GRAY2BGR)
-        elif mode == "edges":
-            # Black edges on white background
-            output = np.full_like(posterized, 255)  # White background
+
+        # Apply filter based on type
+        if type == "posterize":
+            levels = max(2, min(8, param_value))
+            factor = 256 // levels
+            output = (gray // factor) * factor
+
+        elif type == "edges":
+            threshold = max(0, min(255, param_value))
+            edges = cv2.Canny(gray, threshold, threshold * 2)
+            output = np.full_like(gray, 255)  # White background
             output[edges > 0] = 0  # Black edges
-            output = cv2.cvtColor(output, cv2.COLOR_GRAY2BGR)
-        else:  # both - overlay edges in yellow on posterized
-            output = cv2.cvtColor(posterized, cv2.COLOR_GRAY2BGR)
-            # Yellow edges (BGR: 0, 255, 255)
-            output[edges > 0] = [0, 255, 255]
-        
+
+        elif type == "blur":
+            radius = max(1, min(21, param_value))
+            radius = radius if radius % 2 == 1 else radius + 1  # Must be odd
+            output = cv2.GaussianBlur(gray, (radius, radius), 0)
+
+        elif type == "threshold":
+            cutoff = max(0, min(255, param_value))
+            _, output = cv2.threshold(gray, cutoff, 255, cv2.THRESH_BINARY)
+
+        else:
+            raise HTTPException(status_code=400, detail=f"Unknown filter type: {type}")
+
+        # Convert to BGR for PNG encoding
+        output_bgr = cv2.cvtColor(output, cv2.COLOR_GRAY2BGR)
+
         # Encode as PNG
-        _, encoded = cv2.imencode('.png', output)
-        
+        _, encoded = cv2.imencode('.png', output_bgr)
+
         return StreamingResponse(
             io.BytesIO(encoded.tobytes()),
             media_type="image/png",
             headers={"Content-Disposition": "inline; filename=processed.png"}
         )
-        
+
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 

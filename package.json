@@ -1,0 +1,18 @@
+{
+  "name": "drawkiss",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "db:sql": "pgkiss-sql",
+    "db:sql:json": "pgkiss-sql --json",
+    "db:file": "pgkiss-file",
+    "db:file:json": "pgkiss-file --json",
+    "db:tables": "pgkiss-tables",
+    "db:manifest": "pgkiss-manifest",
+    "types:generate": "npx --yes supabase@2.67.1 gen types typescript --db-url \"postgresql://postgres:8vsD44FlQUSY6dX4OBK0Ia+iNfCDDFZ3TqiZhrhEXr8=@supabase.instantgis.cloud:5432/postgres\" --schema drawkiss > frontend/src/types/drawkiss.ts"
+  },
+  "optionalDependencies": {
+    "pgkiss": "github:instantgis/pgkiss#v1.2.1"
+  }
+}
+
