@@ -12,18 +12,38 @@
 
   <!-- ========== CAPTURE MODE ========== -->
   @if (mode() === 'capture') {
-    <div class="media-frame">
+    <div class="media-frame camera-frame">
       @if (!cameraActive()) {
         <p class="placeholder-text">Camera preview will appear here</p>
       }
       <video #videoEl [class.hidden]="!cameraActive()" autoplay playsinline muted></video>
+
+      <!-- Camera controls overlay -->
+      @if (cameraActive()) {
+        <div class="camera-controls">
+          @if (cameraCapabilities().brightness) {
+            <div class="control-group">
+              <button class="control-btn" (click)="adjustBrightness(-1)" title="Darker">−</button>
+              <span class="control-icon">🔆</span>
+              <button class="control-btn" (click)="adjustBrightness(1)" title="Brighter">+</button>
+            </div>
+          }
+          @if (cameraCapabilities().zoom) {
+            <div class="control-group">
+              <button class="control-btn" (click)="adjustZoom(-1)" title="Zoom out">−</button>
+              <span class="control-icon">🔍</span>
+              <button class="control-btn" (click)="adjustZoom(1)" title="Zoom in">+</button>
+            </div>
+          }
+        </div>
+      }
     </div>
 
     <div class="controls">
       @if (!cameraActive()) {
         <button class="btn btn-primary btn-lg" (click)="startCamera()">Start Camera</button>
       } @else {
-        <button class="btn btn-primary btn-icon" (click)="capture()" [disabled]="processing()">Capture</button>
+        <button class="btn btn-primary" (click)="capture()" [disabled]="processing()">📷 Capture</button>
         <button class="btn btn-secondary" (click)="stopCamera()">Stop</button>
       }
     </div>

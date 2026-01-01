@@ -7,6 +7,11 @@ import { CategoryPickerComponent } from '../shared/category-picker/category-pick
 
 type Mode = 'capture' | 'edit';
 
+interface CameraCapabilities {
+  zoom?: { min: number; max: number; step: number };
+  brightness?: { min: number; max: number; step: number };
+}
+
 @Component({
   selector: 'app-capture',
   templateUrl: './capture.component.html',
@@ -56,8 +61,14 @@ export class CaptureComponent implements OnDestroy {
   // Computed: is image saved to DB?
   isImageSaved = computed(() => this.savedImage() !== null);
 
+  // Camera controls
+  cameraCapabilities = signal<CameraCapabilities>({});
+  currentZoom = signal(1);
+  currentBrightness = signal(0);
+
   private stream: MediaStream | null = null;
   private starting = false;
+  private videoTrack: MediaStreamTrack | null = null;
 
   async startCamera() {
     if (this.starting || this.cameraActive()) return;
@@ -68,8 +79,13 @@ export class CaptureComponent implements OnDestroy {
       this.processedImageUrl.set(null);
       this.cleanupStream();
 
+      // Prefer back camera on phones, fallback to any camera on laptops
       this.stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: 'environment', width: { ideal: 1280 }, height: { ideal: 720 } }
+        video: {
+          facingMode: { ideal: 'environment' },  // Back camera preferred, not required
+          width: { ideal: 1920 },
+          height: { ideal: 1080 }
+        }
       });
 
       const video = this.videoEl()?.nativeElement;
@@ -84,6 +100,10 @@ export class CaptureComponent implements OnDestroy {
 
         await video.play();
         this.cameraActive.set(true);
+
+        // Detect camera capabilities for zoom/brightness
+        this.videoTrack = this.stream.getVideoTracks()[0];
+        this.detectCameraCapabilities();
       }
     } catch (err) {
       this.cleanupStream();
@@ -94,6 +114,63 @@ export class CaptureComponent implements OnDestroy {
     }
   }
 
+  private detectCameraCapabilities() {
+    if (!this.videoTrack) return;
+
+    try {
+      // Use 'any' to access non-standard capabilities
+      const capabilities = this.videoTrack.getCapabilities() as any;
+      const caps: CameraCapabilities = {};
+
+      if (capabilities.zoom) {
+        caps.zoom = {
+          min: capabilities.zoom.min,
+          max: capabilities.zoom.max,
+          step: capabilities.zoom.step || 0.1
+        };
+        this.currentZoom.set(capabilities.zoom.min);
+      }
+
+      // exposureCompensation is the standard way to control brightness
+      if (capabilities.exposureCompensation) {
+        caps.brightness = {
+          min: capabilities.exposureCompensation.min,
+          max: capabilities.exposureCompensation.max,
+          step: capabilities.exposureCompensation.step || 0.5
+        };
+        this.currentBrightness.set(0); // Usually 0 is default
+      }
+
+      this.cameraCapabilities.set(caps);
+    } catch (e) {
+      console.log('Camera capabilities not available');
+    }
+  }
+
+  adjustZoom(delta: number) {
+    const caps = this.cameraCapabilities().zoom;
+    if (!caps || !this.videoTrack) return;
+
+    const newZoom = Math.max(caps.min, Math.min(caps.max, this.currentZoom() + delta * caps.step * 5));
+    this.currentZoom.set(newZoom);
+
+    this.videoTrack.applyConstraints({
+      advanced: [{ zoom: newZoom } as any]
+    });
+  }
+
+  adjustBrightness(delta: number) {
+    const caps = this.cameraCapabilities().brightness;
+    if (!caps || !this.videoTrack) return;
+
+    const newBrightness = Math.max(caps.min, Math.min(caps.max, this.currentBrightness() + delta * caps.step * 2));
+    this.currentBrightness.set(newBrightness);
+
+    this.videoTrack.applyConstraints({
+      advanced: [{ exposureCompensation: newBrightness } as any]
+    });
+  }
+
   private cleanupStream() {
     if (this.stream) {
       this.stream.getTracks().forEach(track => {
@@ -102,6 +179,8 @@ export class CaptureComponent implements OnDestroy {
       });
       this.stream = null;
     }
+    this.videoTrack = null;
+    this.cameraCapabilities.set({});
     const video = this.videoEl()?.nativeElement;
     if (video) {
       video.srcObject = null;
