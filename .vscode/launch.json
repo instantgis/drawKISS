@@ -2,10 +2,10 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "name": "Full Stack (Backend + Frontend)",
+      "name": "drawKISS (Client-side)",
       "type": "chrome",
       "request": "launch",
-      "preLaunchTask": "Start All",
+      "preLaunchTask": "frontend:serve",
       "url": "http://localhost:4200"
     },
     {
@@ -16,10 +16,10 @@
       "url": "http://localhost:8888"
     },
     {
-      "name": "Frontend Only (no backend)",
+      "name": "Backend + Frontend (VPS mode)",
       "type": "chrome",
       "request": "launch",
-      "preLaunchTask": "frontend:serve",
+      "preLaunchTask": "Start All",
       "url": "http://localhost:4200"
     }
   ]

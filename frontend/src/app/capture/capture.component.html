@@ -115,27 +115,36 @@
             <label>Filter</label>
             <select [value]="layerType()" (change)="setLayerType($any($event.target).value)">
               @for (type of layerTypes; track type) {
-                <option [value]="type">{{ type | titlecase }}</option>
+                <option [value]="type">{{ formatLayerType(type) }}</option>
               }
             </select>
           </div>
 
-          <div class="option-group">
-            <label>{{ getParamRange().label }}: {{ paramValue() }}</label>
-            <input type="range"
-                   [min]="getParamRange().min"
-                   [max]="getParamRange().max"
-                   [value]="paramValue()"
-                   (input)="setParamValue(+$any($event.target).value)" />
-          </div>
+          @if (hasParams()) {
+            <div class="option-group">
+              <label>{{ getParamRange().label }}: {{ paramValue() }}</label>
+              <input type="range"
+                     [min]="getParamRange().min"
+                     [max]="getParamRange().max"
+                     [value]="paramValue()"
+                     (input)="setParamValue(+$any($event.target).value)" />
+            </div>
+          }
 
-          <!-- Preview button -->
+          <!-- Preview & Save buttons -->
           <div class="action-row">
             <button class="btn btn-secondary" (click)="processImage()" [disabled]="processing()">
               @if (processing()) {
                 <span class="spinner"></span> Processing...
               } @else {
-                Preview Filter
+                Preview
+              }
+            </button>
+            <button class="btn btn-primary" (click)="addLayer()" [disabled]="processing() || !processedImageUrl() || layerSaved()">
+              @if (layerSaved()) {
+                ✓ Saved
+              } @else {
+                Save Layer
               }
             </button>
           </div>
@@ -144,15 +153,6 @@
           @if (processedImageUrl()) {
             <div class="media-frame small">
               <img [src]="processedImageUrl()" alt="Layer preview" />
-            </div>
-            <div class="action-row">
-              <button class="btn btn-primary" (click)="addLayer()" [disabled]="processing() || layerSaved()">
-                @if (layerSaved()) {
-                  ✓ Saved
-                } @else {
-                  Save Layer
-                }
-              </button>
             </div>
           }
 

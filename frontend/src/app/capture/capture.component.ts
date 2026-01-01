@@ -56,7 +56,11 @@ export class CaptureComponent implements OnDestroy {
   layerSaved = signal(false); // Track if current preview was saved
 
   // Available layer types
-  layerTypes: LayerType[] = ['posterize', 'edges', 'blur', 'threshold'];
+  layerTypes: LayerType[] = [
+    'posterize', 'edges', 'blur', 'threshold',
+    'adaptive_threshold', 'bilateral', 'invert',
+    'contrast', 'median', 'contours', 'pencil_sketch'
+  ];
 
   // Computed: is image saved to DB?
   isImageSaved = computed(() => this.savedImage() !== null);
@@ -254,6 +258,16 @@ export class CaptureComponent implements OnDestroy {
 
   getParamRange() {
     return this.processor.getParamRange(this.layerType());
+  }
+
+  /** Format layer type for display (e.g., 'adaptive_threshold' -> 'Adaptive Threshold') */
+  formatLayerType(type: LayerType): string {
+    return type.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+  }
+
+  /** Check if current filter has adjustable parameters */
+  hasParams(): boolean {
+    return this.layerType() !== 'invert';
   }
 
   /**
