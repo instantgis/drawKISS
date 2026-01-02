@@ -41,6 +41,11 @@
         @for (image of filteredImages(); track image.id) {
           <div class="image-card">
             <button class="delete-btn" (click)="deleteImage($event, image)" title="Delete image">×</button>
+            @if (getProgressCount(image.id) > 0) {
+              <button class="progress-badge" (click)="viewProgress($event, image.id)" title="View progress">
+                📸 {{ getProgressCount(image.id) }}
+              </button>
+            }
             <img
               [src]="getThumbnailUrl(image)"
               [alt]="image.title || 'Untitled'"
@@ -52,7 +57,7 @@
               <span class="image-date">{{ formatDate(image.date_taken) }}</span>
             </div>
             <div class="image-actions">
-              <button class="action-btn" (click)="editLayers(image.id)" title="Edit layers">Edit</button>
+              <button class="action-btn" (click)="addProgress($event, image.id)" title="Add progress photo">+ Progress</button>
               <button class="action-btn" (click)="openImage(image.id)" title="View on easel">Easel</button>
             </div>
           </div>

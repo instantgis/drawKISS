@@ -55,6 +55,16 @@ export const routes: Routes = [
     canActivate: [authGuard]
   },
   {
+    path: 'progress/:imageId',
+    loadComponent: () => import('./progress/progress-timeline.component').then(m => m.ProgressTimelineComponent),
+    canActivate: [authGuard]
+  },
+  {
+    path: 'progress/:imageId/capture',
+    loadComponent: () => import('./progress/progress-capture.component').then(m => m.ProgressCaptureComponent),
+    canActivate: [authGuard]
+  },
+  {
     path: 'about',
     loadComponent: () => import('./about/about.component').then(m => m.AboutComponent)
   }

@@ -176,6 +176,44 @@ export type Database = {
           },
         ]
       }
+      progress_photos: {
+        Row: {
+          created_at: string | null
+          id: string
+          image_id: string
+          is_final: boolean | null
+          notes: string | null
+          storage_path: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          image_id: string
+          is_final?: boolean | null
+          notes?: string | null
+          storage_path: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          image_id?: string
+          is_final?: boolean | null
+          notes?: string | null
+          storage_path?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "progress_photos_image_id_fkey"
+            columns: ["image_id"]
+            isOneToOne: false
+            referencedRelation: "images"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never

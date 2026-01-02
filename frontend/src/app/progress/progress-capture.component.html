@@ -1,0 +1,61 @@
+<div class="progress-capture">
+  <header class="capture-header">
+    <button class="btn btn-secondary" (click)="cancel()">← Back</button>
+    <h1>Add Progress: {{ imageTitle() }}</h1>
+  </header>
+
+  @if (error()) {
+    <div class="message-banner error">{{ error() }}</div>
+  }
+
+  <canvas #canvasEl class="hidden"></canvas>
+
+  <!-- Camera mode -->
+  @if (!capturedUrl()) {
+    <div class="media-frame">
+      @if (!cameraActive()) {
+        <p class="placeholder-text">Camera preview</p>
+      }
+      <video #videoEl [class.hidden]="!cameraActive()" autoplay playsinline muted></video>
+    </div>
+
+    <div class="controls">
+      @if (!cameraActive()) {
+        <button class="btn btn-primary btn-lg" (click)="startCamera()">Start Camera</button>
+      } @else {
+        <button class="btn btn-primary" (click)="capture()">📷 Snap</button>
+        <button class="btn btn-secondary" (click)="stopCamera()">Cancel</button>
+      }
+    </div>
+  }
+
+  <!-- Review mode -->
+  @if (capturedUrl()) {
+    <div class="media-frame">
+      <img [src]="capturedUrl()" alt="Captured progress" />
+    </div>
+
+    <div class="notes-input">
+      <label for="notes">Notes (optional)</label>
+      <input
+        id="notes"
+        type="text"
+        [value]="notes()"
+        (input)="notes.set($any($event.target).value)"
+        placeholder="e.g., Finished the outline..."
+      />
+    </div>
+
+    <div class="controls">
+      <button class="btn btn-primary" (click)="save()" [disabled]="processing()">
+        @if (processing()) {
+          Saving...
+        } @else {
+          Save Progress
+        }
+      </button>
+      <button class="btn btn-secondary" (click)="retake()">Retake</button>
+    </div>
+  }
+</div>
+

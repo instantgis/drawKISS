@@ -9,6 +9,8 @@ export type LayerRow = Database['drawkiss']['Tables']['layers']['Row'];
 export type LayerInsert = Database['drawkiss']['Tables']['layers']['Insert'];
 export type CategoryRow = Database['drawkiss']['Tables']['categories']['Row'];
 export type FilterRow = Database['drawkiss']['Tables']['filters']['Row'];
+export type ProgressPhotoRow = Database['drawkiss']['Tables']['progress_photos']['Row'];
+export type ProgressPhotoInsert = Database['drawkiss']['Tables']['progress_photos']['Insert'];
 
 @Injectable({
   providedIn: 'root'
@@ -534,25 +536,47 @@ export class SupabaseService {
 
       if (layersError) throw layersError;
 
-      // 3. Delete layer files from storage
+      // 3. Get all progress photos for this image
+      const { data: progressPhotos, error: progressError } = await this.supabase
+        .schema('drawkiss')
+        .from('progress_photos')
+        .select()
+        .eq('image_id', imageId);
+
+      if (progressError) throw progressError;
+
+      // 4. Delete layer files from storage
       if (layers && layers.length > 0) {
         const layerPaths = layers.map(l => l.storage_path);
         await this.supabase.storage.from('drawkiss').remove(layerPaths);
       }
 
-      // 4. Delete the raw image from storage
+      // 5. Delete progress photo files from storage
+      if (progressPhotos && progressPhotos.length > 0) {
+        const progressPaths = progressPhotos.map(p => p.storage_path);
+        await this.supabase.storage.from('drawkiss').remove(progressPaths);
+      }
+
+      // 6. Delete the raw image from storage
       if (image?.raw_path) {
         await this.supabase.storage.from('drawkiss').remove([image.raw_path]);
       }
 
-      // 5. Delete layers from database (foreign key cascade should handle this, but be explicit)
+      // 7. Delete layers from database (foreign key cascade should handle this, but be explicit)
       await this.supabase
         .schema('drawkiss')
         .from('layers')
         .delete()
         .eq('image_id', imageId);
 
-      // 6. Delete the image from database
+      // 8. Delete progress photos from database (cascade should handle, but be explicit)
+      await this.supabase
+        .schema('drawkiss')
+        .from('progress_photos')
+        .delete()
+        .eq('image_id', imageId);
+
+      // 9. Delete the image from database
       const { error: deleteError } = await this.supabase
         .schema('drawkiss')
         .from('images')
@@ -567,6 +591,169 @@ export class SupabaseService {
       throw e;
     } finally {
       this.isLoading.set(false);
+    }
+  }
+
+  // ==================== Progress Photos ====================
+
+  /**
+   * Upload a progress photo for an image.
+   */
+  async uploadProgressPhoto(imageId: string, file: Blob, notes?: string): Promise<ProgressPhotoRow> {
+    try {
+      const userId = this.getUserId();
+      if (!userId) throw new Error('Must be logged in to upload');
+
+      const id = crypto.randomUUID();
+      const storagePath = `${userId}/progress/${id}.png`;
+
+      // Upload to storage
+      const { error: uploadError } = await this.supabase.storage
+        .from('drawkiss')
+        .upload(storagePath, file, { contentType: 'image/png' });
+
+      if (uploadError) throw uploadError;
+
+      // Create database record
+      const progressData: ProgressPhotoInsert = {
+        id,
+        user_id: userId,
+        image_id: imageId,
+        storage_path: storagePath,
+        notes: notes || null,
+        is_final: false
+      };
+
+      const { data, error: insertError } = await this.supabase
+        .schema('drawkiss')
+        .from('progress_photos')
+        .insert(progressData)
+        .select()
+        .single();
+
+      if (insertError) throw insertError;
+      return data;
+    } catch (e) {
+      const message = e instanceof Error ? e.message : 'Progress photo upload failed';
+      this.error.set(message);
+      throw e;
+    }
+  }
+
+  /**
+   * Get all progress photos for an image.
+   */
+  async getProgressPhotos(imageId: string): Promise<ProgressPhotoRow[]> {
+    try {
+      const { data, error } = await this.supabase
+        .schema('drawkiss')
+        .from('progress_photos')
+        .select()
+        .eq('image_id', imageId)
+        .order('created_at', { ascending: true });
+
+      if (error) throw error;
+      return data || [];
+    } catch (e) {
+      const message = e instanceof Error ? e.message : 'Failed to load progress photos';
+      this.error.set(message);
+      throw e;
+    }
+  }
+
+  /**
+   * Get progress photo count for an image.
+   */
+  async getProgressPhotoCount(imageId: string): Promise<number> {
+    try {
+      const { count, error } = await this.supabase
+        .schema('drawkiss')
+        .from('progress_photos')
+        .select('*', { count: 'exact', head: true })
+        .eq('image_id', imageId);
+
+      if (error) throw error;
+      return count || 0;
+    } catch (e) {
+      return 0;
+    }
+  }
+
+  /**
+   * Get progress counts for multiple images at once.
+   */
+  async getProgressPhotoCounts(imageIds: string[]): Promise<Map<string, number>> {
+    try {
+      const { data, error } = await this.supabase
+        .schema('drawkiss')
+        .from('progress_photos')
+        .select('image_id')
+        .in('image_id', imageIds);
+
+      if (error) throw error;
+
+      const counts = new Map<string, number>();
+      imageIds.forEach(id => counts.set(id, 0));
+      (data || []).forEach(row => {
+        counts.set(row.image_id, (counts.get(row.image_id) || 0) + 1);
+      });
+      return counts;
+    } catch (e) {
+      return new Map();
+    }
+  }
+
+  /**
+   * Mark a progress photo as final.
+   */
+  async markProgressPhotoAsFinal(progressId: string): Promise<void> {
+    try {
+      const { error } = await this.supabase
+        .schema('drawkiss')
+        .from('progress_photos')
+        .update({ is_final: true })
+        .eq('id', progressId);
+
+      if (error) throw error;
+    } catch (e) {
+      const message = e instanceof Error ? e.message : 'Failed to mark as final';
+      this.error.set(message);
+      throw e;
+    }
+  }
+
+  /**
+   * Delete a progress photo (storage + database).
+   */
+  async deleteProgressPhoto(progressId: string): Promise<void> {
+    try {
+      // Get the progress photo to find storage path
+      const { data: photo, error: photoError } = await this.supabase
+        .schema('drawkiss')
+        .from('progress_photos')
+        .select()
+        .eq('id', progressId)
+        .single();
+
+      if (photoError) throw photoError;
+
+      // Delete from storage
+      if (photo?.storage_path) {
+        await this.supabase.storage.from('drawkiss').remove([photo.storage_path]);
+      }
+
+      // Delete from database
+      const { error: deleteError } = await this.supabase
+        .schema('drawkiss')
+        .from('progress_photos')
+        .delete()
+        .eq('id', progressId);
+
+      if (deleteError) throw deleteError;
+    } catch (e) {
+      const message = e instanceof Error ? e.message : 'Failed to delete progress photo';
+      this.error.set(message);
+      throw e;
     }
   }
 }

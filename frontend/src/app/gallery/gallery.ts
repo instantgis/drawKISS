@@ -24,6 +24,9 @@ export class Gallery implements OnInit {
   // Cache for signed thumbnail URLs
   thumbnailUrls = signal<Map<string, string>>(new Map());
 
+  // Cache for progress photo counts
+  progressCounts = signal<Map<string, number>>(new Map());
+
   filteredImages = computed(() => {
     const catId = this.selectedCategory();
     const allImages = this.images();
@@ -46,11 +49,25 @@ export class Gallery implements OnInit {
       this.hasMore.set(imageResult.hasMore);
       this.categories.set(categories);
 
-      // Pre-load signed thumbnail URLs
-      await this.loadThumbnailUrls(imageResult.images);
+      // Pre-load signed thumbnail URLs and progress counts
+      await Promise.all([
+        this.loadThumbnailUrls(imageResult.images),
+        this.loadProgressCounts(imageResult.images)
+      ]);
     } finally {
       this.isLoading.set(false);
     }
+  }
+
+  private async loadProgressCounts(images: ImageRow[]) {
+    const imageIds = images.map(img => img.id);
+    if (imageIds.length === 0) return;
+    const counts = await this.supabase.getProgressPhotoCounts(imageIds);
+    this.progressCounts.update(existing => {
+      const merged = new Map(existing);
+      counts.forEach((count, id) => merged.set(id, count));
+      return merged;
+    });
   }
 
   private async loadThumbnailUrls(images: ImageRow[]) {
@@ -113,6 +130,20 @@ export class Gallery implements OnInit {
   getThumbnailUrl(image: ImageRow): string {
     // Return cached signed URL
     return this.thumbnailUrls().get(image.id) || '';
+  }
+
+  getProgressCount(imageId: string): number {
+    return this.progressCounts().get(imageId) || 0;
+  }
+
+  addProgress(event: Event, imageId: string) {
+    event.stopPropagation();
+    this.router.navigate(['/progress', imageId, 'capture']);
+  }
+
+  viewProgress(event: Event, imageId: string) {
+    event.stopPropagation();
+    this.router.navigate(['/progress', imageId]);
   }
 
   formatDate(dateStr: string | null): string {

@@ -1,0 +1,68 @@
+<div class="progress-timeline">
+  <header class="timeline-header">
+    <button class="btn btn-secondary" (click)="goBack()">← Gallery</button>
+    <h1>{{ image()?.title || 'Progress' }}</h1>
+    <button class="btn btn-primary" (click)="addMore()">+ Add</button>
+  </header>
+
+  @if (error()) {
+    <div class="message-banner error">{{ error() }}</div>
+  }
+
+  @if (isLoading()) {
+    <div class="loading">Loading...</div>
+  }
+
+  @if (!isLoading()) {
+    <!-- Reference image -->
+    <section class="reference-section">
+      <h2>Reference</h2>
+      <div class="reference-thumb" (click)="selectPhoto(null)">
+        <img [src]="referenceUrl()" [alt]="image()?.title || 'Reference'" />
+      </div>
+    </section>
+
+    <!-- Progress timeline -->
+    <section class="timeline-section">
+      <h2>Progress ({{ progressPhotos().length }})</h2>
+
+      @if (progressPhotos().length === 0) {
+        <p class="empty-state">No progress photos yet. Tap + Add to snap your first!</p>
+      } @else {
+        <div class="timeline-grid">
+          @for (photo of progressPhotos(); track photo.id) {
+            <div class="timeline-card" [class.is-final]="photo.is_final" (click)="selectPhoto(photo)">
+              <img [src]="getPhotoUrl(photo)" alt="Progress" loading="lazy" />
+              @if (photo.is_final) {
+                <span class="final-badge">✓ Final</span>
+              }
+              <div class="card-info">
+                <span class="card-date">{{ formatDate(photo.created_at) }}</span>
+                @if (photo.notes) {
+                  <span class="card-notes">{{ photo.notes }}</span>
+                }
+              </div>
+            </div>
+          }
+        </div>
+      }
+    </section>
+  }
+
+  <!-- Lightbox -->
+  @if (selectedPhoto()) {
+    <div class="lightbox" (click)="selectPhoto(null)">
+      <div class="lightbox-content" (click)="$event.stopPropagation()">
+        <img [src]="getPhotoUrl(selectedPhoto()!)" alt="Progress photo" />
+        <div class="lightbox-actions">
+          @if (!selectedPhoto()!.is_final) {
+            <button class="btn btn-primary" (click)="markAsFinal(selectedPhoto()!)">Mark as Final</button>
+          }
+          <button class="btn btn-secondary" (click)="deletePhoto(selectedPhoto()!)">Delete</button>
+          <button class="btn btn-secondary" (click)="selectPhoto(null)">Close</button>
+        </div>
+      </div>
+    </div>
+  }
+</div>
+
