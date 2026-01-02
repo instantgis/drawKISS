@@ -54,6 +54,12 @@
     <button class="btn btn-secondary" (click)="toggleFullscreen()" title="Toggle Fullscreen">
       {{ isFullscreen() ? '⛶' : '⛶' }}
     </button>
+
+    @if (selectedLayerId()) {
+      <button class="btn btn-danger btn-icon" (click)="deleteSelectedLayer()" title="Delete selected layer">
+        🗑
+      </button>
+    }
   </div>
 
   <!-- Layer selector -->
@@ -66,15 +72,12 @@
         Original
       </button>
       @for (layer of layers(); track layer.id) {
-        <div class="layer-chip-wrapper">
-          <button
-            class="layer-chip"
-            [class.active]="selectedLayerId() === layer.id"
-            (click)="selectLayer(layer.id)">
-            {{ layer.type }} ({{ layer.param_value }})
-          </button>
-          <button class="layer-delete" (click)="deleteLayer($event, layer.id)" title="Delete layer">×</button>
-        </div>
+        <button
+          class="layer-chip"
+          [class.active]="selectedLayerId() === layer.id"
+          (click)="selectLayer(layer.id)">
+          {{ layer.name ?? 'Layer' }}
+        </button>
       }
     </div>
   }

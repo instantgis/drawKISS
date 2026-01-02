@@ -1,0 +1,44 @@
+.filter-grid-loading {
+  display: flex;
+  justify-content: center;
+  padding: var(--space-lg);
+}
+
+.filter-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
+  gap: var(--space-sm);
+}
+
+.filter-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-sm) var(--space-xs);
+  min-height: 44px;
+  border: 2px solid var(--color-border-light);
+  border-radius: 4px 8px 5px 10px;
+  background: var(--color-surface);
+  color: var(--color-text);
+  font-family: var(--font-family);
+  font-size: var(--font-size-sm);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+
+  &:hover {
+    border-color: var(--color-border);
+    background: var(--color-surface-hover);
+  }
+
+  &.active {
+    border-color: var(--color-primary);
+    background: var(--color-primary);
+    color: white;
+  }
+}
+
+.label {
+  text-align: center;
+  line-height: 1.2;
+}
+

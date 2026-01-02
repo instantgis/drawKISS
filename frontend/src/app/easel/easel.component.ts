@@ -190,7 +190,7 @@ export class EaselComponent implements OnInit, OnDestroy {
     const layer = this.layers().find(l => l.id === layerId);
     if (!layer) return;
 
-    const confirmed = confirm(`Delete layer "${layer.type} (${layer.param_value})"?`);
+    const confirmed = confirm(`Delete layer "${layer.name ?? 'Layer'}"?`);
     if (!confirmed) return;
 
     try {
@@ -201,6 +201,25 @@ export class EaselComponent implements OnInit, OnDestroy {
       if (this.selectedLayerId() === layerId) {
         this.showRawImage();
       }
+    } catch (e) {
+      this.error.set('Failed to delete layer');
+    }
+  }
+
+  async deleteSelectedLayer() {
+    const layerId = this.selectedLayerId();
+    if (!layerId) return;
+
+    const layer = this.layers().find(l => l.id === layerId);
+    if (!layer) return;
+
+    const confirmed = confirm(`Delete layer "${layer.name ?? 'Layer'}"?`);
+    if (!confirmed) return;
+
+    try {
+      await this.supabase.deleteLayer(layerId);
+      this.layers.update(layers => layers.filter(l => l.id !== layerId));
+      this.showRawImage();
     } catch (e) {
       this.error.set('Failed to delete layer');
     }

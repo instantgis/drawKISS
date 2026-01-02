@@ -1,8 +1,7 @@
 import { Component, signal, viewChild, ElementRef, inject, OnDestroy, computed } from '@angular/core';
-import { TitleCasePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { ImageProcessorService, LayerType } from '../image-processor.service';
-import { SupabaseService, ImageRow, LayerRow } from '../supabase.service';
+import { Router } from '@angular/router';
+import { SupabaseService, ImageRow } from '../supabase.service';
 import { CategoryPickerComponent } from '../shared/category-picker/category-picker.component';
 
 type Mode = 'capture' | 'edit';
@@ -16,11 +15,11 @@ interface CameraCapabilities {
   selector: 'app-capture',
   templateUrl: './capture.component.html',
   styleUrl: './capture.component.scss',
-  imports: [TitleCasePipe, FormsModule, CategoryPickerComponent]
+  imports: [FormsModule, CategoryPickerComponent]
 })
 export class CaptureComponent implements OnDestroy {
-  private processor = inject(ImageProcessorService);
   private supabase = inject(SupabaseService);
+  private router = inject(Router);
 
   videoEl = viewChild<ElementRef<HTMLVideoElement>>('videoEl');
   canvasEl = viewChild<ElementRef<HTMLCanvasElement>>('canvasEl');
@@ -31,7 +30,6 @@ export class CaptureComponent implements OnDestroy {
   cameraActive = signal(false);
   processing = signal(false);
   rawImageUrl = signal<string | null>(null);
-  processedImageUrl = signal<string | null>(null);
   error = signal<string | null>(null);
   successMessage = signal<string | null>(null);
 
@@ -44,23 +42,8 @@ export class CaptureComponent implements OnDestroy {
   // Saved image reference (after saving raw)
   savedImage = signal<ImageRow | null>(null);
 
-  // Saved layers for this image
-  savedLayers = signal<LayerRow[]>([]);
-
-  // Current raw blob for reprocessing
+  // Current raw blob for saving
   private rawBlob: Blob | null = null;
-
-  // Layer type and param for preview
-  layerType = signal<LayerType>('posterize');
-  paramValue = signal(4);
-  layerSaved = signal(false); // Track if current preview was saved
-
-  // Available layer types
-  layerTypes: LayerType[] = [
-    'posterize', 'edges', 'blur', 'threshold',
-    'adaptive_threshold', 'bilateral', 'invert',
-    'contrast', 'median', 'contours', 'pencil_sketch'
-  ];
 
   // Computed: is image saved to DB?
   isImageSaved = computed(() => this.savedImage() !== null);
@@ -80,7 +63,6 @@ export class CaptureComponent implements OnDestroy {
 
     try {
       this.error.set(null);
-      this.processedImageUrl.set(null);
       this.cleanupStream();
 
       // Prefer back camera on phones, fallback to any camera on laptops
@@ -218,58 +200,6 @@ export class CaptureComponent implements OnDestroy {
     }, 'image/png');
   }
 
-  async processImage() {
-    if (!this.rawBlob) return;
-
-    this.processing.set(true);
-    this.error.set(null);
-
-    const oldUrl = this.processedImageUrl();
-    if (oldUrl) URL.revokeObjectURL(oldUrl);
-
-    try {
-      const resultBlob = await this.processor.processImage(this.rawBlob, {
-        type: this.layerType(),
-        param_value: this.paramValue()
-      });
-      this.processedImageUrl.set(URL.createObjectURL(resultBlob));
-    } catch (err) {
-      this.error.set('Failed to process image. Is the backend running?');
-      console.error(err);
-    } finally {
-      this.processing.set(false);
-    }
-  }
-
-  setLayerType(type: LayerType) {
-    this.layerType.set(type);
-    this.paramValue.set(this.processor.getDefaultParam(type));
-    this.layerSaved.set(false);
-    // Clear old preview when filter type changes
-    const oldUrl = this.processedImageUrl();
-    if (oldUrl) URL.revokeObjectURL(oldUrl);
-    this.processedImageUrl.set(null);
-  }
-
-  setParamValue(value: number) {
-    this.paramValue.set(value);
-    this.layerSaved.set(false);
-  }
-
-  getParamRange() {
-    return this.processor.getParamRange(this.layerType());
-  }
-
-  /** Format layer type for display (e.g., 'adaptive_threshold' -> 'Adaptive Threshold') */
-  formatLayerType(type: LayerType): string {
-    return type.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
-  }
-
-  /** Check if current filter has adjustable parameters */
-  hasParams(): boolean {
-    return this.layerType() !== 'invert';
-  }
-
   /**
    * Save the raw image to gallery (creates the image record)
    */
@@ -296,38 +226,12 @@ export class CaptureComponent implements OnDestroy {
   }
 
   /**
-   * Add the current filter as a new layer to the saved image
+   * Navigate to the layer editor for the saved image
    */
-  async addLayer() {
+  goToLayerEditor() {
     const image = this.savedImage();
-    const processedUrl = this.processedImageUrl();
-
-    if (!image || !processedUrl) return;
-
-    this.processing.set(true);
-    this.error.set(null);
-    this.successMessage.set(null);
-
-    try {
-      const response = await fetch(processedUrl);
-      const processedBlob = await response.blob();
-
-      const layer = await this.supabase.uploadLayer(
-        image.id,
-        processedBlob,
-        this.layerType(),
-        this.paramValue()
-      );
-
-      // Add to saved layers list
-      this.savedLayers.update(layers => [...layers, layer]);
-      this.layerSaved.set(true);
-      this.successMessage.set(`Layer added: ${this.layerType()} (${this.paramValue()})`);
-    } catch (err) {
-      this.error.set('Failed to add layer');
-      console.error(err);
-    } finally {
-      this.processing.set(false);
+    if (image) {
+      this.router.navigate(['/edit', image.id]);
     }
   }
 
@@ -338,9 +242,7 @@ export class CaptureComponent implements OnDestroy {
     this.cleanupUrls();
     this.rawBlob = null;
     this.rawImageUrl.set(null);
-    this.processedImageUrl.set(null);
     this.savedImage.set(null);
-    this.savedLayers.set([]);
     this.imageTitle.set('');
     this.mode.set('capture');
     this.error.set(null);
@@ -349,9 +251,7 @@ export class CaptureComponent implements OnDestroy {
 
   private cleanupUrls() {
     const rawUrl = this.rawImageUrl();
-    const processedUrl = this.processedImageUrl();
     if (rawUrl) URL.revokeObjectURL(rawUrl);
-    if (processedUrl) URL.revokeObjectURL(processedUrl);
   }
 
   ngOnDestroy() {

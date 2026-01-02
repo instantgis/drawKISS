@@ -1,0 +1,19 @@
+@if (loading()) {
+  <div class="filter-grid-loading">
+    <div class="spinner"></div>
+  </div>
+} @else {
+  <div class="filter-grid">
+    @for (filter of filters(); track filter.id) {
+      <button
+        class="filter-btn"
+        [class.active]="isSelected(filter)"
+        (click)="select(filter)"
+        [title]="filter.description ?? filter.name"
+      >
+        <span class="label">{{ filter.name }}</span>
+      </button>
+    }
+  </div>
+}
+

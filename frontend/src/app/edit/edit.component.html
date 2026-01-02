@@ -1,0 +1,93 @@
+<div class="edit-container">
+  @if (loading()) {
+    <div class="loading-state">
+      <div class="spinner"></div>
+      <p>Loading image...</p>
+    </div>
+  } @else if (error() && !image()) {
+    <div class="error-state">
+      <p class="message-banner error">{{ error() }}</p>
+      <button class="btn btn-primary" (click)="goBack()">Back to Gallery</button>
+    </div>
+  } @else {
+    <!-- Top toolbar -->
+    <div class="toolbar">
+      <div class="toolbar-row">
+        <button class="btn btn-secondary btn-sm" (click)="goBack()">←</button>
+        <button class="btn btn-primary btn-sm" (click)="toggleFilterPanel()">
+          Filters
+        </button>
+        @if (selectedFilter() && processedImageUrl()) {
+          <button
+            class="btn btn-primary btn-sm"
+            [disabled]="processing()"
+            (click)="saveLayer()"
+          >
+            Save
+          </button>
+        }
+        <span class="layer-count">{{ savedLayers().length }} layers</span>
+      </div>
+      @if (selectedFilter()) {
+        <div class="param-row">
+          @if (hasParams()) {
+            <input
+              type="range"
+              class="form-range"
+              [min]="getParamRange().min"
+              [max]="getParamRange().max"
+              step="1"
+              [value]="paramValue()"
+              (input)="setParamValue(+$any($event.target).value)"
+            />
+            <span class="param-value">{{ paramValue() }}</span>
+          }
+          <button
+            class="btn btn-primary btn-sm"
+            [disabled]="processing()"
+            (click)="preview()"
+          >
+            @if (processing()) { ... } @else { Apply }
+          </button>
+        </div>
+        <div class="filter-name">{{ selectedFilter()!.name }}</div>
+      }
+    </div>
+
+    <!-- Main preview area - full focus -->
+    <section class="preview-area">
+      <div class="media-frame">
+        @if (processedImageUrl()) {
+          <img [src]="processedImageUrl()" alt="Processed preview" />
+        } @else if (rawImageUrl()) {
+          <img [src]="rawImageUrl()" alt="Original" />
+        }
+      </div>
+    </section>
+
+    <!-- Filter panel overlay -->
+    @if (filterPanelOpen()) {
+      <div class="filter-overlay" (click)="toggleFilterPanel()">
+        <div class="filter-panel" (click)="$event.stopPropagation()">
+          <header class="panel-header">
+            <h2>Select Filter</h2>
+            <button class="close-btn" (click)="toggleFilterPanel()">×</button>
+          </header>
+
+          <app-filter-selector
+            [selectedId]="selectedFilter()?.id ?? ''"
+            (filterSelected)="onFilterSelectedAndClose($event)"
+          />
+        </div>
+      </div>
+    }
+
+    @if (error()) {
+      <div class="toast error">{{ error() }}</div>
+    }
+    @if (successMessage()) {
+      <div class="toast success">{{ successMessage() }}</div>
+    }
+  }
+</div>
+

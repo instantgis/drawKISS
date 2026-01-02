@@ -39,6 +39,11 @@ export const routes: Routes = [
     canActivate: [authGuard]
   },
   {
+    path: 'edit/:imageId',
+    loadComponent: () => import('./edit/edit.component').then(m => m.EditComponent),
+    canActivate: [authGuard]
+  },
+  {
     path: 'about',
     loadComponent: () => import('./about/about.component').then(m => m.AboutComponent)
   }

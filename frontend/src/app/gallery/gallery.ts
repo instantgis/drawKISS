@@ -106,6 +106,10 @@ export class Gallery implements OnInit {
     this.router.navigate(['/easel', imageId]);
   }
 
+  editLayers(imageId: string) {
+    this.router.navigate(['/edit', imageId]);
+  }
+
   getThumbnailUrl(image: ImageRow): string {
     // Return cached signed URL
     return this.thumbnailUrls().get(image.id) || '';

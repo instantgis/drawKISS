@@ -58,6 +58,9 @@
 
 .camera-frame {
   position: relative;
+  // Leave room for controls below
+  max-height: calc(100vh - 180px);
+  max-height: calc(100dvh - 180px);
 }
 
 .camera-controls {
@@ -145,39 +148,13 @@
   display: none !important;
 }
 
-/* Edit mode layout */
-.edit-layout {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: var(--space-md);
-  flex: 1;
-  min-height: 0;
-
-  @media (max-width: 768px) {
-    grid-template-columns: 1fr;
-    overflow-y: auto;
-  }
-}
-
-.raw-panel, .layer-panel {
-  background: var(--color-surface);
-  border-radius: var(--radius-md);
-  padding: var(--space-md);
+/* Edit mode layout - simple single column */
+.edit-panel {
   display: flex;
   flex-direction: column;
-  gap: var(--space-sm);
-  overflow-y: auto;
-
-  h2 {
-    font-size: var(--font-size-base);
-    font-weight: var(--font-weight-bold);
-    margin: 0;
-  }
-}
-
-.media-frame.small {
-  flex: 0 0 auto;
-  max-height: 200px;
+  gap: var(--space-md);
+  max-width: 500px;
+  margin: 0 auto;
 }
 
 .title-input {
@@ -215,31 +192,7 @@
   border-radius: var(--radius-sm);
 }
 
-.hint {
-  color: var(--color-text-muted);
-  font-style: italic;
-}
 
-.saved-layers {
-  margin-top: var(--space-sm);
-  padding-top: var(--space-sm);
-  border-top: 1px solid var(--color-border);
-
-  h3 {
-    font-size: var(--font-size-sm);
-    margin: 0 0 var(--space-xs) 0;
-  }
-
-  ul {
-    margin: 0;
-    padding-left: var(--space-md);
-
-    li {
-      font-size: var(--font-size-sm);
-      color: var(--color-text-muted);
-    }
-  }
-}
 
 .btn-danger {
   background: var(--color-error);

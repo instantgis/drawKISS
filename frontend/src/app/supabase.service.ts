@@ -8,6 +8,7 @@ export type ImageInsert = Database['drawkiss']['Tables']['images']['Insert'];
 export type LayerRow = Database['drawkiss']['Tables']['layers']['Row'];
 export type LayerInsert = Database['drawkiss']['Tables']['layers']['Insert'];
 export type CategoryRow = Database['drawkiss']['Tables']['categories']['Row'];
+export type FilterRow = Database['drawkiss']['Tables']['filters']['Row'];
 
 @Injectable({
   providedIn: 'root'
@@ -133,12 +134,58 @@ export class SupabaseService {
   }
 
   /**
+   * Get all available filters (system-wide).
+   */
+  async getFilters(): Promise<FilterRow[]> {
+    try {
+      const { data, error } = await this.supabase
+        .schema('drawkiss')
+        .from('filters')
+        .select()
+        .order('sort_order', { ascending: true });
+
+      if (error) throw error;
+      return data || [];
+    } catch (e) {
+      const message = e instanceof Error ? e.message : 'Failed to load filters';
+      this.error.set(message);
+      throw e;
+    }
+  }
+
+  /**
+   * Upload a processed layer using filter code (legacy compatibility).
+   * Looks up filter_id from code, then calls uploadLayer.
+   */
+  async uploadLayerByCode(
+    imageId: string,
+    file: Blob,
+    filterCode: string,
+    paramValue: number,
+    name?: string
+  ): Promise<LayerRow> {
+    // Look up filter by code
+    const { data: filter, error } = await this.supabase
+      .schema('drawkiss')
+      .from('filters')
+      .select()
+      .eq('code', filterCode)
+      .single();
+
+    if (error || !filter) {
+      throw new Error(`Unknown filter code: ${filterCode}`);
+    }
+
+    return this.uploadLayer(imageId, file, filter.id, paramValue, name);
+  }
+
+  /**
    * Upload a processed layer and create database record.
    */
   async uploadLayer(
     imageId: string,
     file: Blob,
-    type: string,
+    filterId: string,
     paramValue: number,
     name?: string
   ): Promise<LayerRow> {
@@ -168,9 +215,9 @@ export class SupabaseService {
         user_id: userId,
         image_id: imageId,
         storage_path: storagePath,
-        type,
+        filter_id: filterId,
         param_value: paramValue,
-        name: name || `${type} (${paramValue})`,
+        name: name || `Layer ${maxOrder + 1}`,
         layer_order: maxOrder + 1,
         visible: true,
         opacity: 100

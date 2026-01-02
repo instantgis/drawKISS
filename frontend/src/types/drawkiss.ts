@@ -36,6 +36,33 @@ export type Database = {
         }
         Relationships: []
       }
+      filters: {
+        Row: {
+          code: string
+          created_at: string | null
+          description: string | null
+          id: string
+          name: string
+          sort_order: number | null
+        }
+        Insert: {
+          code: string
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          name: string
+          sort_order?: number | null
+        }
+        Update: {
+          code?: string
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          name?: string
+          sort_order?: number | null
+        }
+        Relationships: []
+      }
       images: {
         Row: {
           category_id: string | null
@@ -95,6 +122,7 @@ export type Database = {
       layers: {
         Row: {
           created_at: string | null
+          filter_id: string
           id: string
           image_id: string
           layer_order: number | null
@@ -102,12 +130,12 @@ export type Database = {
           opacity: number | null
           param_value: number | null
           storage_path: string
-          type: string
           user_id: string
           visible: boolean | null
         }
         Insert: {
           created_at?: string | null
+          filter_id: string
           id?: string
           image_id: string
           layer_order?: number | null
@@ -115,12 +143,12 @@ export type Database = {
           opacity?: number | null
           param_value?: number | null
           storage_path: string
-          type: string
           user_id: string
           visible?: boolean | null
         }
         Update: {
           created_at?: string | null
+          filter_id?: string
           id?: string
           image_id?: string
           layer_order?: number | null
@@ -128,11 +156,17 @@ export type Database = {
           opacity?: number | null
           param_value?: number | null
           storage_path?: string
-          type?: string
           user_id?: string
           visible?: boolean | null
         }
         Relationships: [
+          {
+            foreignKeyName: "layers_filter_id_fkey"
+            columns: ["filter_id"]
+            isOneToOne: false
+            referencedRelation: "filters"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "layers_image_id_fkey"
             columns: ["image_id"]

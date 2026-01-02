@@ -34,6 +34,17 @@ npm start
 . .\scripts\db\use-vps-supabase.ps1; npm run db:sql:json -- "SELECT * FROM drawkiss.images LIMIT 5"
 ```
 
+## TypeScript Types
+
+**NEVER edit `frontend/src/types/drawkiss.ts` directly** - it is auto-generated from the database schema:
+
+```powershell
+npm run types:generate
+```
+
+Run this after any schema changes to keep types in sync with the database.
+
+
 ## Project Structure
 
 ```

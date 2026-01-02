@@ -26,6 +26,11 @@ export class CategoryPickerComponent implements OnInit {
   async loadCategories() {
     const cats = await this.supabase.getCategories();
     this.categories.set(cats);
+
+    // Auto-select first category if none selected
+    if (!this.selectedId() && cats.length > 0) {
+      this.selectedChange.emit(cats[0].id);
+    }
   }
 
   select(id: string) {

@@ -14,6 +14,12 @@ This project was generated using [Angular CLI](https://github.com/angular/angula
   - New control flow syntax (`@if`, `@for`, `@switch`)
   - `inject()` function (not constructor injection)
 
+## Design system
+
+There is a simple design system in `src/styles.css`.
+Its an artsy farty style.
+You must follow it and avoid hard coding styles in every component so we an control the look and feel of the app in one place.
+
 ## Development server
 
 To start a local development server, run:
