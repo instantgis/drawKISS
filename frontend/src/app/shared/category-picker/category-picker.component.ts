@@ -1,4 +1,4 @@
-import { Component, signal, inject, input, output, OnInit } from '@angular/core';
+import { Component, signal, inject, input, output, OnInit, OnDestroy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { SupabaseService, CategoryRow } from '../../supabase.service';
 
@@ -9,8 +9,9 @@ import { SupabaseService, CategoryRow } from '../../supabase.service';
   templateUrl: './category-picker.component.html',
   styleUrl: './category-picker.component.scss'
 })
-export class CategoryPickerComponent implements OnInit {
+export class CategoryPickerComponent implements OnInit, OnDestroy {
   private supabase = inject(SupabaseService);
+  private destroyed = false;
 
   selectedId = input<string | null>(null);
   selectedChange = output<string>();
@@ -23,8 +24,13 @@ export class CategoryPickerComponent implements OnInit {
     await this.loadCategories();
   }
 
+  ngOnDestroy() {
+    this.destroyed = true;
+  }
+
   async loadCategories() {
     const cats = await this.supabase.getCategories();
+    if (this.destroyed) return;
     this.categories.set(cats);
 
     // Auto-select first category if none selected
