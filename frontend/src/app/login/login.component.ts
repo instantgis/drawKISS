@@ -107,7 +107,9 @@ export class LoginComponent {
     try {
       if (this.isSignUp()) {
         await this.supabase.signUp(this.email, this.password);
-        this.error.set('Check your email for confirmation link');
+        // Auto-confirm is enabled, so sign in immediately after signup
+        await this.supabase.signIn(this.email, this.password);
+        this.router.navigate(['/gallery']);
       } else {
         await this.supabase.signIn(this.email, this.password);
         this.router.navigate(['/gallery']);

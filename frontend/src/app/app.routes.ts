@@ -13,11 +13,22 @@ const authGuard = () => {
   return router.parseUrl('/login');
 };
 
+// Redirect to gallery if logged in, otherwise to about
+const homeRedirect = () => {
+  const supabase = inject(SupabaseService);
+  const router = inject(Router);
+
+  if (supabase.currentUser()) {
+    return router.parseUrl('/gallery');
+  }
+  return router.parseUrl('/about');
+};
+
 export const routes: Routes = [
   {
     path: '',
-    redirectTo: 'about',
-    pathMatch: 'full'
+    canActivate: [homeRedirect],
+    children: []
   },
   {
     path: 'login',

@@ -1,7 +1,7 @@
 <div class="gallery-container">
   <header class="gallery-header">
     <h1>Gallery</h1>
-    <a routerLink="/capture" class="btn btn-primary">+ New Capture</a>
+    <a routerLink="/capture" class="btn btn-primary">+ New Photo</a>
   </header>
 
   <!-- Category filter -->
@@ -34,7 +34,7 @@
     @if (filteredImages().length === 0) {
       <div class="empty-state">
         <p>No images yet</p>
-        <p class="hint">Take a photo from the Capture page</p>
+        <p class="hint">Take a photo using New Photo</p>
       </div>
     } @else {
       <div class="image-grid">
