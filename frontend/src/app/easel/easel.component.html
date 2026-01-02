@@ -1,108 +1,45 @@
 <div class="easel-container">
 
-  <!-- Toolbar -->
-  <div class="toolbar">
-    <button class="btn btn-secondary" (click)="goBack()">← Gallery</button>
-
+  <!-- Minimal top bar -->
+  <div class="top-bar">
+    <button class="btn-float" (click)="goBack()" title="Back to Gallery">←</button>
     <input
-      class="toolbar-title-input"
+      class="title-input"
       [value]="imageTitle()"
       (blur)="updateTitle($any($event.target).value)"
       (keydown.enter)="$any($event.target).blur()"
-      placeholder="Image title..." />
-
-    <div class="toolbar-group">
-      <label>Rows: {{ gridRows() }}</label>
-      <input type="range" min="2" max="20" [value]="gridRows()"
-             (input)="gridRows.set(+$any($event.target).value)" />
-    </div>
-
-    <div class="toolbar-group">
-      <label>Cols: {{ gridCols() }}</label>
-      <input type="range" min="2" max="20" [value]="gridCols()"
-             (input)="gridCols.set(+$any($event.target).value)" />
-    </div>
-
-    <button class="btn btn-secondary" (click)="saveGridSettings()" title="Save grid settings">
-      💾 Save Grid
-    </button>
-
-    <div class="toolbar-group">
-      <app-category-picker
-        [selectedId]="selectedCategory()"
-        (selectedChange)="updateCategory($event)" />
-    </div>
-
-    <button class="btn btn-secondary" (click)="toggleGrid()">
-      {{ showGrid() ? 'Hide Grid' : 'Show Grid' }}
-    </button>
-
-    @if (selectedCell()) {
-      <button class="btn btn-secondary" (click)="clearSelection()">Clear Focus</button>
-    }
-
-    <div class="toolbar-divider"></div>
-
-    <!-- Zoom controls -->
-    <div class="toolbar-group zoom-controls">
-      <button class="btn btn-icon" (click)="zoomOut()" title="Zoom Out">−</button>
-      <span class="zoom-level">{{ (zoom() * 100).toFixed(0) }}%</span>
-      <button class="btn btn-icon" (click)="zoomIn()" title="Zoom In">+</button>
-      <button class="btn btn-icon" (click)="resetZoom()" title="Reset Zoom">⟲</button>
-    </div>
-
-    <button class="btn btn-secondary" (click)="toggleFullscreen()" title="Toggle Fullscreen">
-      {{ isFullscreen() ? '⛶' : '⛶' }}
-    </button>
-
-    @if (selectedLayerId()) {
-      <button class="btn btn-danger btn-icon" (click)="deleteSelectedLayer()" title="Delete selected layer">
-        🗑
-      </button>
-    }
+      placeholder="Untitled..." />
+    <button class="btn-float" (click)="toggleFullscreen()" title="Toggle Fullscreen">⛶</button>
   </div>
 
-  <!-- Layer selector -->
-  @if (layers().length > 0) {
-    <div class="layer-bar">
-      <button
-        class="layer-chip"
-        [class.active]="selectedLayerId() === null"
-        (click)="showRawImage()">
-        Original
-      </button>
-      @for (layer of layers(); track layer.id) {
-        <button
-          class="layer-chip"
-          [class.active]="selectedLayerId() === layer.id"
-          (click)="selectLayer(layer.id)">
-          {{ layer.name ?? 'Layer' }}
-        </button>
-      }
-    </div>
-  }
-
-  <!-- Main canvas area -->
+  <!-- Full-screen canvas area -->
   <div class="canvas-area"
        (wheel)="onWheel($event)"
        (mousedown)="onPanStart($event)"
        (mousemove)="onPanMove($event)"
        (mouseup)="onPanEnd()"
        (mouseleave)="onPanEnd()"
-       (touchstart)="onPanStart($event)"
-       (touchmove)="onPanMove($event)"
+       (touchstart)="onTouchStart($event)"
+       (touchmove)="onTouchMove($event)"
        (touchend)="onPanEnd()"
        [class.panning]="isPanning()">
+
     @if (error()) {
       <div class="error-overlay">
         <p>{{ error() }}</p>
       </div>
     }
 
+    @if (layerLoading()) {
+      <div class="loading-overlay">
+        <div class="spinner"></div>
+      </div>
+    }
+
     <div class="zoom-container"
          [style.transform]="'scale(' + zoom() + ') translate(' + panX() + 'px, ' + panY() + 'px)'">
       @if (imageUrl()) {
-        <img [src]="imageUrl()" alt="Sketch reference" class="reference-image" />
+        <img [src]="imageUrl()" alt="Sketch reference" class="reference-image" (load)="onImageLoaded()" />
       } @else {
         <div class="placeholder">
           <p>No image loaded</p>
@@ -113,41 +50,113 @@
       <!-- SVG Grid Overlay -->
       @if (showGrid()) {
         <svg class="grid-overlay" viewBox="0 0 100 100" preserveAspectRatio="none">
-        <!-- Clickable cells -->
-        @for (cell of cells(); track cell.row + '-' + cell.col) {
-          <rect
-            [attr.x]="cell.x"
-            [attr.y]="cell.y"
-            [attr.width]="cell.width"
-            [attr.height]="cell.height"
-            class="grid-cell"
-            [class.dimmed]="isCellDimmed(cell.row, cell.col)"
-            (click)="selectCell(cell.row, cell.col)"
-          />
-        }
-
-        <!-- Grid lines - dark outline -->
-        @for (line of gridLines(); track 'o-' + line.x1 + '-' + line.y1) {
-          <line
-            [attr.x1]="line.x1 + '%'"
-            [attr.y1]="line.y1 + '%'"
-            [attr.x2]="line.x2 + '%'"
-            [attr.y2]="line.y2 + '%'"
-            class="grid-line"
-          />
-        }
-        <!-- Grid lines - yellow inner -->
-        @for (line of gridLines(); track 'i-' + line.x1 + '-' + line.y1) {
-          <line
-            [attr.x1]="line.x1 + '%'"
-            [attr.y1]="line.y1 + '%'"
-            [attr.x2]="line.x2 + '%'"
-            [attr.y2]="line.y2 + '%'"
-            class="grid-line-inner"
-          />
-        }
+          @for (cell of cells(); track cell.row + '-' + cell.col) {
+            <rect
+              [attr.x]="cell.x"
+              [attr.y]="cell.y"
+              [attr.width]="cell.width"
+              [attr.height]="cell.height"
+              class="grid-cell"
+              [class.dimmed]="isCellDimmed(cell.row, cell.col)"
+              (click)="selectCell(cell.row, cell.col)"
+            />
+          }
+          @for (line of gridLines(); track $index) {
+            <line
+              [attr.x1]="line.x1 + '%'" [attr.y1]="line.y1 + '%'"
+              [attr.x2]="line.x2 + '%'" [attr.y2]="line.y2 + '%'"
+              class="grid-line"
+            />
+            <line
+              [attr.x1]="line.x1 + '%'" [attr.y1]="line.y1 + '%'"
+              [attr.x2]="line.x2 + '%'" [attr.y2]="line.y2 + '%'"
+              class="grid-line-inner"
+            />
+          }
         </svg>
       }
+    </div>
+  </div>
+
+  <!-- Toggle button - always visible at bottom -->
+  <button class="drawer-toggle" (click)="toggleDrawer()">
+    {{ drawerOpen() ? '▼' : '▲' }}
+  </button>
+
+  <!-- Bottom drawer panel -->
+  <div class="bottom-drawer" [class.closed]="!drawerOpen()">
+    <div class="drawer-content">
+      <!-- Layer chips -->
+      <div class="drawer-section">
+        <div class="layer-chips">
+          <button
+            class="layer-chip"
+            [class.active]="selectedLayerId() === null"
+            (click)="showRawImage()">
+            Original
+          </button>
+          @for (layer of layers(); track layer.id) {
+            <button
+              class="layer-chip"
+              [class.active]="selectedLayerId() === layer.id"
+              (click)="selectLayer(layer.id)">
+              {{ layer.name ?? 'Layer' }}
+            </button>
+          }
+        </div>
+      </div>
+
+      <!-- Quick actions row -->
+      <div class="drawer-section action-row">
+        <button class="btn-action" (click)="toggleGrid()" [class.active]="showGrid()">
+          <span class="icon">▦</span>
+          <span class="label">Grid</span>
+        </button>
+        @if (selectedCell()) {
+          <button class="btn-action" (click)="clearSelection()">
+            <span class="icon">✕</span>
+            <span class="label">Clear</span>
+          </button>
+        }
+        <button class="btn-action" (click)="resetZoom()">
+          <span class="icon">⟲</span>
+          <span class="label">Reset</span>
+        </button>
+        @if (selectedLayerId()) {
+          <button class="btn-action danger" (click)="deleteSelectedLayer()">
+            <span class="icon">🗑</span>
+            <span class="label">Delete</span>
+          </button>
+        }
+      </div>
+
+      <!-- Grid controls -->
+      <div class="drawer-section grid-controls">
+        <div class="control-group">
+          <label>Rows</label>
+          <div class="stepper">
+            <button (click)="adjustGrid('rows', -1)">−</button>
+            <span>{{ gridRows() }}</span>
+            <button (click)="adjustGrid('rows', 1)">+</button>
+          </div>
+        </div>
+        <div class="control-group">
+          <label>Cols</label>
+          <div class="stepper">
+            <button (click)="adjustGrid('cols', -1)">−</button>
+            <span>{{ gridCols() }}</span>
+            <button (click)="adjustGrid('cols', 1)">+</button>
+          </div>
+        </div>
+        <button class="btn-save" (click)="saveGridSettings()">💾 Save</button>
+      </div>
+
+      <!-- Category picker -->
+      <div class="drawer-section">
+        <app-category-picker
+          [selectedId]="selectedCategory()"
+          (selectedChange)="updateCategory($event)" />
+      </div>
     </div>
   </div>
 

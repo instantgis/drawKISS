@@ -35,6 +35,7 @@ export class EaselComponent implements OnInit, OnDestroy {
   showGrid = signal(true);
   error = signal<string | null>(null);
   isLoading = signal(false);
+  layerLoading = signal(false);
 
   // Zoom & pan state
   zoom = signal(1);
@@ -48,6 +49,12 @@ export class EaselComponent implements OnInit, OnDestroy {
 
   // Fullscreen state
   isFullscreen = signal(false);
+
+  // Bottom drawer state
+  drawerOpen = signal(true);
+
+  // Pinch-zoom state
+  private lastPinchDistance = 0;
 
   private refreshInterval: ReturnType<typeof setInterval> | null = null;
   private el = inject(ElementRef);
@@ -157,6 +164,7 @@ export class EaselComponent implements OnInit, OnDestroy {
 
   async selectLayer(layerId: string | null) {
     this.selectedLayerId.set(layerId);
+    this.layerLoading.set(true);
 
     if (layerId) {
       const layer = this.layers().find(l => l.id === layerId);
@@ -177,11 +185,17 @@ export class EaselComponent implements OnInit, OnDestroy {
 
   async showRawImage() {
     this.selectedLayerId.set(null);
+    this.layerLoading.set(true);
+
     const image = this.supabase.currentImage();
     if (image) {
       const signedUrl = await this.supabase.getSignedUrl(image.raw_path);
       this.imageUrl.set(signedUrl);
     }
+  }
+
+  onImageLoaded() {
+    this.layerLoading.set(false);
   }
 
   async deleteLayer(event: Event, layerId: string) {
@@ -361,6 +375,50 @@ export class EaselComponent implements OnInit, OnDestroy {
     } catch (e) {
       // Error already set in service
     }
+  }
+
+  // Toggle drawer open/closed
+  toggleDrawer() {
+    this.drawerOpen.update(v => !v);
+  }
+
+  // Grid adjustment with stepper buttons
+  adjustGrid(dimension: 'rows' | 'cols', delta: number) {
+    if (dimension === 'rows') {
+      this.gridRows.update(v => Math.max(2, Math.min(20, v + delta)));
+    } else {
+      this.gridCols.update(v => Math.max(2, Math.min(20, v + delta)));
+    }
+  }
+
+  // Touch handlers with pinch-zoom support
+  onTouchStart(event: TouchEvent) {
+    if (event.touches.length === 2) {
+      // Pinch gesture starting
+      this.lastPinchDistance = this.getPinchDistance(event);
+    } else if (event.touches.length === 1 && this.zoom() > 1) {
+      // Single finger pan
+      this.onPanStart(event);
+    }
+  }
+
+  onTouchMove(event: TouchEvent) {
+    if (event.touches.length === 2) {
+      // Pinch-zoom
+      event.preventDefault();
+      const distance = this.getPinchDistance(event);
+      const scale = distance / this.lastPinchDistance;
+      this.zoom.update(z => Math.max(0.5, Math.min(5, z * scale)));
+      this.lastPinchDistance = distance;
+    } else if (event.touches.length === 1 && this.isPanning()) {
+      // Single finger pan
+      this.onPanMove(event);
+    }
+  }
+
+  private getPinchDistance(event: TouchEvent): number {
+    const [t1, t2] = [event.touches[0], event.touches[1]];
+    return Math.hypot(t2.clientX - t1.clientX, t2.clientY - t1.clientY);
   }
 }
 
