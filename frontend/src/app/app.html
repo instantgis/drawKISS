@@ -1,3 +1,9 @@
+@if (updateAvailable()) {
+  <div class="update-banner" (click)="reloadApp()">
+    🚀 New version available — tap to update
+  </div>
+}
+
 <nav class="app-nav">
   @if (supabase.currentUser()) {
     <a routerLink="/gallery" routerLinkActive="active">Gallery</a>

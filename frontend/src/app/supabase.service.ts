@@ -22,6 +22,9 @@ export class SupabaseService {
   currentUser = signal<User | null>(null);
   session = signal<Session | null>(null);
 
+  // Promise that resolves when initial auth check is complete
+  readonly authReady: Promise<void>;
+
   // Current image being edited
   currentImage = signal<ImageRow | null>(null);
   currentLayers = signal<LayerRow[]>([]);
@@ -36,8 +39,8 @@ export class SupabaseService {
       environment.supabaseAnonKey
     );
 
-    // Initialize auth state
-    this.supabase.auth.getSession().then(({ data: { session } }) => {
+    // Initialize auth state and expose promise for guards to await
+    this.authReady = this.supabase.auth.getSession().then(({ data: { session } }) => {
       this.session.set(session);
       this.currentUser.set(session?.user ?? null);
     });

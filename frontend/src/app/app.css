@@ -1,3 +1,17 @@
+.update-banner {
+  background: var(--color-primary);
+  color: white;
+  text-align: center;
+  padding: var(--space-xs) var(--space-sm);
+  cursor: pointer;
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+}
+
+.update-banner:hover {
+  filter: brightness(1.1);
+}
+
 .app-nav {
   display: flex;
   flex-wrap: wrap;

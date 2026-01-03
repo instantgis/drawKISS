@@ -2,9 +2,12 @@ import { Routes, Router, ActivatedRouteSnapshot, RouterStateSnapshot } from '@an
 import { inject } from '@angular/core';
 import { SupabaseService } from './supabase.service';
 
-const authGuard = (route: ActivatedRouteSnapshot, state: RouterStateSnapshot) => {
+const authGuard = async (route: ActivatedRouteSnapshot, state: RouterStateSnapshot) => {
   const supabase = inject(SupabaseService);
   const router = inject(Router);
+
+  // Wait for initial auth check to complete
+  await supabase.authReady;
 
   if (supabase.currentUser()) {
     return true;
@@ -16,9 +19,12 @@ const authGuard = (route: ActivatedRouteSnapshot, state: RouterStateSnapshot) =>
 };
 
 // Redirect to gallery if logged in, otherwise to about
-const homeRedirect = () => {
+const homeRedirect = async () => {
   const supabase = inject(SupabaseService);
   const router = inject(Router);
+
+  // Wait for initial auth check to complete
+  await supabase.authReady;
 
   if (supabase.currentUser()) {
     return router.parseUrl('/gallery');
