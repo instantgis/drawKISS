@@ -1,8 +1,9 @@
-import { Component, signal, viewChild, ElementRef, inject, OnDestroy, computed } from '@angular/core';
+import { Component, signal, viewChild, ElementRef, inject, OnDestroy, OnInit, computed } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { SupabaseService, ImageRow } from '../supabase.service';
 import { CategoryPickerComponent } from '../shared/category-picker/category-picker.component';
+import { SharedImageService } from '../share/shared-image.service';
 
 type Mode = 'capture' | 'edit';
 
@@ -17,9 +18,10 @@ interface CameraCapabilities {
   styleUrl: './capture.component.scss',
   imports: [FormsModule, CategoryPickerComponent]
 })
-export class CaptureComponent implements OnDestroy {
+export class CaptureComponent implements OnInit, OnDestroy {
   private supabase = inject(SupabaseService);
   private router = inject(Router);
+  private sharedImageService = inject(SharedImageService);
 
   videoEl = viewChild<ElementRef<HTMLVideoElement>>('videoEl');
   canvasEl = viewChild<ElementRef<HTMLCanvasElement>>('canvasEl');
@@ -56,6 +58,29 @@ export class CaptureComponent implements OnDestroy {
   private stream: MediaStream | null = null;
   private starting = false;
   private videoTrack: MediaStreamTrack | null = null;
+
+  ngOnInit() {
+    // Check if there's a shared image from the share target
+    const sharedFile = this.sharedImageService.consumeSharedImage();
+    if (sharedFile) {
+      this.loadSharedImage(sharedFile);
+    }
+  }
+
+  /**
+   * Load an image from a shared file (from Web Share Target)
+   */
+  private loadSharedImage(file: File) {
+    this.rawBlob = file;
+    this.rawImageUrl.set(URL.createObjectURL(file));
+    this.mode.set('edit');
+
+    // Use filename (without extension) as default title
+    const nameWithoutExt = file.name.replace(/\.[^/.]+$/, '');
+    if (nameWithoutExt && nameWithoutExt !== 'shared-image') {
+      this.imageTitle.set(nameWithoutExt);
+    }
+  }
 
   async startCamera() {
     if (this.starting || this.cameraActive()) return;

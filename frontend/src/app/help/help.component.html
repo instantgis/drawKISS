@@ -1,0 +1,90 @@
+<div class="help-container">
+  <div class="help-content">
+    <h1>How to Use drawKISS</h1>
+    <p class="tagline">A quick guide for fellow artists</p>
+
+    <section>
+      <h2>📱 Step 1: Install the App</h2>
+      <p>drawKISS works best as an installed app on your phone or tablet:</p>
+      <ul>
+        <li><strong>iPhone/iPad:</strong> Open in Safari → tap Share → "Add to Home Screen"</li>
+        <li><strong>Android:</strong> Open in Chrome → tap menu (⋮) → "Install app" or "Add to Home Screen"</li>
+      </ul>
+      <p>Once installed, you can share photos directly to drawKISS from your gallery!</p>
+    </section>
+
+    <section>
+      <h2>📸 Step 2: Capture or Share a Photo</h2>
+      <p>Two ways to get your reference image:</p>
+      <ul>
+        <li><strong>Take a photo:</strong> Go to "New Photo" and use your camera</li>
+        <li><strong>Share from gallery:</strong> Open any photo → Share → choose drawKISS</li>
+      </ul>
+    </section>
+
+    <section>
+      <h2>🎨 Step 3: Save & Add Layers</h2>
+      <p>After capturing:</p>
+      <ol>
+        <li>Give your image a title (optional)</li>
+        <li>Pick a category to organize your work</li>
+        <li>Tap <strong>"Save to Gallery"</strong></li>
+        <li>Tap <strong>"Add Layers"</strong> to apply filters</li>
+      </ol>
+    </section>
+
+    <section>
+      <h2>🖼️ Step 4: Create Filter Layers</h2>
+      <p>In the layer editor, create different versions of your reference:</p>
+      <ul>
+        <li><strong>Threshold:</strong> Pure black & white — great for high contrast studies</li>
+        <li><strong>Posterize:</strong> Reduces to 3-5 tones — perfect for value studies</li>
+        <li><strong>Edges:</strong> Shows outlines only — helps with proportions</li>
+        <li><strong>Blur:</strong> Softens details — useful for seeing overall shapes</li>
+      </ul>
+      <p>Save each layer with a descriptive name like "edges-strong" or "4-values".</p>
+    </section>
+
+    <section>
+      <h2>🎯 Step 5: Draw on the Easel</h2>
+      <p>Open any image from your gallery to enter the Easel view:</p>
+      <ul>
+        <li><strong>Grid overlay:</strong> Toggle the grid to help with proportions</li>
+        <li><strong>Switch layers:</strong> Flip between your original and filtered versions</li>
+        <li><strong>Dim cells:</strong> Tap grid cells to mark areas you've completed</li>
+        <li><strong>Fullscreen:</strong> Hide controls when you're in the flow</li>
+      </ul>
+    </section>
+
+    <section>
+      <h2>📷 Step 6: Document Your Progress</h2>
+      <p>Track your drawing journey:</p>
+      <ul>
+        <li>Tap the <strong>camera icon</strong> on the Easel to photograph your work</li>
+        <li>Add notes about techniques, materials, or observations</li>
+        <li>View your progress timeline to see how far you've come</li>
+      </ul>
+    </section>
+
+    <section class="tips">
+      <h2>💡 Pro Tips</h2>
+      <ul>
+        <li>Use your laptop/tablet as an easel-mounted display</li>
+        <li>Create multiple layer versions to switch between while drawing</li>
+        <li>The posterize filter with 4-5 levels is amazing for value mapping</li>
+        <li>Grid your paper to match the on-screen grid for accurate transfer</li>
+      </ul>
+    </section>
+
+    <div class="cta">
+      @if (isLoggedIn()) {
+        <a routerLink="/capture" class="btn btn-primary">Start Drawing</a>
+        <a routerLink="/gallery" class="btn btn-secondary">View Gallery</a>
+      } @else {
+        <p class="cta-text">Ready to simplify your workflow?</p>
+        <a routerLink="/login" class="btn btn-primary">Sign Up Free</a>
+      }
+    </div>
+  </div>
+</div>
+

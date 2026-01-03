@@ -3,6 +3,7 @@
     <a routerLink="/gallery" routerLinkActive="active">Gallery</a>
     <a routerLink="/capture" routerLinkActive="active">New Photo</a>
   }
+  <a routerLink="/help" routerLinkActive="active">Help</a>
   <a routerLink="/about" routerLinkActive="active">About</a>
   @if (supabase.currentUser()) {
     <button class="logout-btn" (click)="logout()">Logout</button>

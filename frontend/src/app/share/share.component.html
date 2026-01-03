@@ -1,0 +1,16 @@
+<div class="share-container">
+  <div class="share-card card">
+    @if (loading()) {
+      <div class="loading">
+        <div class="spinner"></div>
+        <p>Processing shared image...</p>
+      </div>
+    } @else if (error()) {
+      <div class="error-message">
+        <p>{{ error() }}</p>
+        <button class="btn btn-primary" (click)="goToCapture()">Go to Capture</button>
+      </div>
+    }
+  </div>
+</div>
+

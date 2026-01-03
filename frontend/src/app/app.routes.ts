@@ -31,6 +31,11 @@ export const routes: Routes = [
     children: []
   },
   {
+    path: 'share',
+    loadComponent: () => import('./share/share.component').then(m => m.ShareComponent),
+    canActivate: [authGuard]
+  },
+  {
     path: 'login',
     loadComponent: () => import('./login/login.component').then(m => m.LoginComponent)
   },
@@ -67,5 +72,9 @@ export const routes: Routes = [
   {
     path: 'about',
     loadComponent: () => import('./about/about.component').then(m => m.AboutComponent)
+  },
+  {
+    path: 'help',
+    loadComponent: () => import('./help/help.component').then(m => m.HelpComponent)
   }
 ];

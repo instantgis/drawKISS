@@ -3,7 +3,8 @@ import { Injectable, signal } from '@angular/core';
 export type LayerType =
   | 'posterize' | 'edges' | 'blur' | 'threshold'           // original
   | 'adaptive_threshold' | 'bilateral' | 'invert'          // new
-  | 'contrast' | 'median' | 'contours' | 'pencil_sketch';  // new
+  | 'contrast' | 'median' | 'contours' | 'pencil_sketch'   // new
+  | 'watercolor';                                           // artistic
 
 export interface ProcessingRequest {
   type: LayerType;
@@ -213,6 +214,63 @@ export class ImageProcessorService {
   }
 
   /**
+   * Watercolor effect: Creates smooth, painterly regions with soft edges.
+   * Uses multiple bilateral filter passes to create smooth color regions,
+   * then combines with edge detection for that hand-painted look.
+   */
+  private watercolor(src: any, smoothness: number): any {
+    // Step 1: Convert to RGB for bilateral filtering
+    const rgb = new cv.Mat();
+    cv.cvtColor(src, rgb, cv.COLOR_RGBA2RGB);
+
+    // Step 2: Apply bilateral filter multiple times for smooth, painterly regions
+    // Bilateral filter smooths while preserving edges - perfect for watercolor
+    const d = Math.max(5, Math.min(15, Math.round(smoothness / 8)));
+    let temp = rgb.clone();
+    let smoothed = new cv.Mat();
+
+    // Multiple passes create increasingly smooth color regions
+    const passes = Math.max(2, Math.min(5, Math.round(smoothness / 25)));
+    for (let i = 0; i < passes; i++) {
+      cv.bilateralFilter(temp, smoothed, d, d * 2, d * 2);
+      temp.delete();
+      temp = smoothed.clone();
+    }
+
+    // Step 3: Create soft edges using median blur + adaptive threshold
+    const gray = new cv.Mat();
+    const edges = new cv.Mat();
+    cv.cvtColor(smoothed, gray, cv.COLOR_RGB2GRAY);
+
+    // Median blur removes noise while keeping edges
+    let medianK = Math.max(3, Math.min(9, Math.round(smoothness / 15)));
+    if (medianK % 2 === 0) medianK++;
+    cv.medianBlur(gray, gray, medianK);
+
+    // Adaptive threshold creates ink-like outlines
+    let blockSize = Math.max(5, Math.min(15, Math.round(smoothness / 10)));
+    if (blockSize % 2 === 0) blockSize++;
+    cv.adaptiveThreshold(gray, edges, 255, cv.ADAPTIVE_THRESH_MEAN_C, cv.THRESH_BINARY, blockSize, 2);
+
+    // Step 4: Combine smoothed image with edges
+    const edgesRgb = new cv.Mat();
+    cv.cvtColor(edges, edgesRgb, cv.COLOR_GRAY2RGB);
+
+    const combined = new cv.Mat();
+    cv.bitwise_and(smoothed, edgesRgb, combined);
+
+    // Step 5: Convert to grayscale for the layer system
+    const result = new cv.Mat();
+    cv.cvtColor(combined, result, cv.COLOR_RGB2GRAY);
+
+    // Cleanup
+    rgb.delete(); temp.delete(); smoothed.delete();
+    gray.delete(); edges.delete(); edgesRgb.delete(); combined.delete();
+
+    return result;
+  }
+
+  /**
    * Process an image with the specified filter.
    * Uses client-side OpenCV.js directly (no worker).
    */
@@ -244,6 +302,7 @@ export class ImageProcessorService {
         case 'median': result = this.median(src, request.param_value); break;
         case 'contours': result = this.contours(src, request.param_value); break;
         case 'pencil_sketch': result = this.pencilSketch(src, request.param_value); break;
+        case 'watercolor': result = this.watercolor(src, request.param_value); break;
         default: throw new Error(`Unknown filter: ${request.type}`);
       }
 
@@ -283,6 +342,7 @@ export class ImageProcessorService {
       case 'median': return 5;
       case 'contours': return 128;
       case 'pencil_sketch': return 80;
+      case 'watercolor': return 60;
     }
   }
 
@@ -302,6 +362,7 @@ export class ImageProcessorService {
       case 'median': return { min: 1, max: 21, label: 'Kernel Size' };
       case 'contours': return { min: 0, max: 255, label: 'Threshold' };
       case 'pencil_sketch': return { min: 20, max: 150, label: 'Intensity' };
+      case 'watercolor': return { min: 20, max: 100, label: 'Smoothness' };
     }
   }
 }

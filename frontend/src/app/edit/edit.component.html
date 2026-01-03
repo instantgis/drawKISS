@@ -26,7 +26,13 @@
             Save
           </button>
         }
-        <span class="layer-count">{{ savedLayers().length }} layers</span>
+        <button
+          class="btn btn-secondary btn-sm layer-count-btn"
+          [class.has-layers]="savedLayers().length > 0"
+          (click)="toggleLayerPanel()"
+        >
+          {{ savedLayers().length }} layers
+        </button>
       </div>
       @if (selectedFilter()) {
         <div class="param-row">
@@ -55,13 +61,37 @@
     </div>
 
     <!-- Main preview area - full focus -->
-    <section class="preview-area">
-      <div class="media-frame">
+    <section
+      class="preview-area"
+      (wheel)="onWheel($event)"
+      (mousedown)="onPanStart($event)"
+      (mousemove)="onPanMove($event)"
+      (mouseup)="onPanEnd()"
+      (mouseleave)="onPanEnd()"
+      (touchstart)="onPanStart($event)"
+      (touchmove)="onPanMove($event)"
+      (touchend)="onPanEnd()"
+      [class.panning]="zoom() > 1"
+    >
+      <div
+        class="media-frame"
+        [style.transform]="getTransformStyle()"
+        [style.cursor]="zoom() > 1 ? 'grab' : 'default'"
+      >
         @if (processedImageUrl()) {
-          <img [src]="processedImageUrl()" alt="Processed preview" />
+          <img [src]="processedImageUrl()" alt="Processed preview" draggable="false" />
         } @else if (rawImageUrl()) {
-          <img [src]="rawImageUrl()" alt="Original" />
+          <img [src]="rawImageUrl()" alt="Original" draggable="false" />
         }
+      </div>
+
+      <!-- Zoom controls -->
+      <div class="zoom-controls">
+        <button class="zoom-btn" (click)="zoomOut()" title="Zoom out">−</button>
+        <button class="zoom-btn zoom-reset" (click)="resetZoom()" title="Reset zoom">
+          {{ (zoom() * 100).toFixed(0) }}%
+        </button>
+        <button class="zoom-btn" (click)="zoomIn()" title="Zoom in">+</button>
       </div>
     </section>
 
@@ -78,6 +108,65 @@
             [selectedId]="selectedFilter()?.id ?? ''"
             (filterSelected)="onFilterSelectedAndClose($event)"
           />
+        </div>
+      </div>
+    }
+
+    <!-- Layer panel overlay -->
+    @if (layerPanelOpen()) {
+      <div class="filter-overlay" (click)="toggleLayerPanel()">
+        <div class="layer-panel" (click)="$event.stopPropagation()">
+          <header class="panel-header">
+            <h2>Layers</h2>
+            <button class="close-btn" (click)="toggleLayerPanel()">×</button>
+          </header>
+
+          <div class="layer-list">
+            @if (savedLayers().length === 0) {
+              <p class="empty-message">No layers yet. Apply a filter and save it!</p>
+            } @else {
+              @for (layer of savedLayers(); track layer.id) {
+                <div
+                  class="layer-item"
+                  [class.active]="previewingLayerId() === layer.id"
+                >
+                  <div class="layer-thumb">
+                    @if (getLayerUrl(layer.id)) {
+                      <img [src]="getLayerUrl(layer.id)" alt="" />
+                    } @else {
+                      <div class="thumb-placeholder"></div>
+                    }
+                  </div>
+                  <div class="layer-info">
+                    <span class="layer-name">{{ layer.name || 'Untitled' }}</span>
+                    @if (layer.param_value) {
+                      <span class="layer-param">({{ layer.param_value }})</span>
+                    }
+                  </div>
+                  <div class="layer-actions">
+                    <button
+                      class="icon-btn"
+                      title="Preview"
+                      (click)="previewLayer(layer)"
+                    >👁</button>
+                    <button
+                      class="icon-btn delete"
+                      title="Delete"
+                      (click)="deleteLayer(layer)"
+                    >🗑</button>
+                  </div>
+                </div>
+              }
+            }
+          </div>
+
+          @if (savedLayers().length > 0) {
+            <footer class="panel-footer">
+              <button class="btn btn-primary" (click)="goToEasel()">
+                View in Easel →
+              </button>
+            </footer>
+          }
         </div>
       </div>
     }

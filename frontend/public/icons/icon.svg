@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- Background: Paper texture color -->
+  <rect width="512" height="512" rx="64" fill="#f5f0e6"/>
+  
+  <!-- Paper edge shadow -->
+  <rect x="40" y="60" width="432" height="392" rx="8" fill="#d4cfc2"/>
+  <rect x="40" y="56" width="432" height="392" rx="8" fill="#faf8f3" stroke="#c4b8a4" stroke-width="3"/>
+  
+  <!-- Sketch lines on paper (rough horizontal lines) -->
+  <g stroke="#5a5048" stroke-width="2" stroke-linecap="round" opacity="0.3">
+    <path d="M80 120 Q200 118, 280 122 T400 119" />
+    <path d="M80 170 Q150 168, 220 172 T340 169" />
+    <path d="M80 220 Q180 217, 320 223 T432 218" />
+    <path d="M80 270 Q160 272, 260 268 T380 271" />
+  </g>
+  
+  <!-- Pencil (angled, pointing to paper) -->
+  <g transform="translate(280, 180) rotate(45)">
+    <!-- Pencil body - wood -->
+    <rect x="0" y="-18" width="180" height="36" rx="2" fill="#c9a86c"/>
+    <!-- Pencil stripe -->
+    <rect x="0" y="-6" width="180" height="12" fill="#8b7355"/>
+    <!-- Sharpened tip - wood -->
+    <polygon points="-40,0 0,-18 0,18" fill="#c9a86c"/>
+    <!-- Graphite core -->
+    <polygon points="-40,0 0,-6 0,6" fill="#3d3632"/>
+    <!-- Eraser ferrule -->
+    <rect x="180" y="-18" width="20" height="36" fill="#d4cfc2"/>
+    <!-- Eraser -->
+    <rect x="200" y="-16" width="30" height="32" rx="4" fill="#8b7355"/>
+  </g>
+  
+  <!-- "dK" stylized text -->
+  <g fill="#3d3632" font-family="Caveat, cursive" font-size="120" font-weight="600">
+    <text x="70" y="420">dK</text>
+  </g>
+</svg>
+
