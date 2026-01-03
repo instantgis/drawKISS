@@ -1,16 +1,18 @@
-import { Routes } from '@angular/router';
+import { Routes, Router, ActivatedRouteSnapshot, RouterStateSnapshot } from '@angular/router';
 import { inject } from '@angular/core';
 import { SupabaseService } from './supabase.service';
-import { Router } from '@angular/router';
 
-const authGuard = () => {
+const authGuard = (route: ActivatedRouteSnapshot, state: RouterStateSnapshot) => {
   const supabase = inject(SupabaseService);
   const router = inject(Router);
 
   if (supabase.currentUser()) {
     return true;
   }
-  return router.parseUrl('/login');
+  // Preserve the originally requested URL so we can return after login
+  return router.createUrlTree(['/login'], {
+    queryParams: { redirectTo: state.url }
+  });
 };
 
 // Redirect to gallery if logged in, otherwise to about
@@ -30,6 +32,11 @@ export const routes: Routes = [
     canActivate: [homeRedirect],
     children: []
   },
+	  {
+	    path: 'debug/share',
+	    loadComponent: () => import('./share/share-debug.component').then(m => m.ShareDebugComponent),
+	    canActivate: [authGuard]
+	  },
   {
     path: 'share',
     loadComponent: () => import('./share/share.component').then(m => m.ShareComponent),

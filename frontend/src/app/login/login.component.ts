@@ -1,6 +1,6 @@
 import { Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
+import { Router, ActivatedRoute } from '@angular/router';
 import { SupabaseService } from '../supabase.service';
 
 @Component({
@@ -88,6 +88,7 @@ import { SupabaseService } from '../supabase.service';
 export class LoginComponent {
   private supabase = inject(SupabaseService);
   private router = inject(Router);
+	private route = inject(ActivatedRoute);
 
   email = '';
   password = '';
@@ -104,15 +105,18 @@ export class LoginComponent {
     this.loading.set(true);
     this.error.set(null);
 
+		// If we were redirected here by the auth guard, go back there after login
+		const redirectTo = this.route.snapshot.queryParamMap.get('redirectTo');
+
     try {
       if (this.isSignUp()) {
         await this.supabase.signUp(this.email, this.password);
         // Auto-confirm is enabled, so sign in immediately after signup
         await this.supabase.signIn(this.email, this.password);
-        this.router.navigate(['/gallery']);
+			this.router.navigateByUrl(redirectTo || '/gallery');
       } else {
         await this.supabase.signIn(this.email, this.password);
-        this.router.navigate(['/gallery']);
+			this.router.navigateByUrl(redirectTo || '/gallery');
       }
     } catch (e) {
       this.error.set(e instanceof Error ? e.message : 'Auth failed');

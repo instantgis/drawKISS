@@ -1,0 +1,93 @@
+<div class="debug-page">
+  <div class="container">
+    <div class="card debug-card">
+      <h1 class="text-xl">Share Target Diagnostics</h1>
+
+      @if (!diagnostics()) {
+        <p class="text-muted">Running diagnostics...</p>
+      } @else {
+        <section class="debug-section">
+          <h2 class="text-lg">SharedImageService</h2>
+          <p>
+            Has pending shared image:
+            <strong>{{ diagnostics()!.sharedImagePending }}</strong>
+          </p>
+        </section>
+
+        <section class="debug-section">
+          <h2 class="text-lg">Service Worker</h2>
+          <p>
+            Service worker supported:
+            <strong>{{ diagnostics()!.hasServiceWorker }}</strong>
+          </p>
+
+          @if (diagnostics()!.serviceWorkerInfo) {
+            <ul class="debug-list">
+              <li>Script URL: {{ diagnostics()!.serviceWorkerInfo!.scriptURL }}</li>
+              <li>Scope: {{ diagnostics()!.serviceWorkerInfo!.scope }}</li>
+              <li>State: {{ diagnostics()!.serviceWorkerInfo!.state }}</li>
+            </ul>
+          } @else {
+            <p class="text-muted">No active service worker registration found.</p>
+          }
+        </section>
+
+        <section class="debug-section">
+          <h2 class="text-lg">Share Cache (share-target-cache-v1)</h2>
+          <p>
+            Window caches available:
+            <strong>{{ diagnostics()!.hasWindowCaches }}</strong>
+          </p>
+
+          @if (diagnostics()!.cacheEntries.length === 0) {
+            <p class="text-muted">No entries found in share-target-cache-v1.</p>
+          } @else {
+            <div class="table-wrapper">
+              <table class="debug-table">
+                <thead>
+                  <tr>
+                    <th>URL</th>
+                    <th>Filename</th>
+                    <th>Content-Type</th>
+                    <th>Timestamp</th>
+                    <th>Size (bytes)</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (entry of diagnostics()!.cacheEntries; track trackByUrl($index, entry)) {
+                    <tr>
+                      <td>{{ entry.url }}</td>
+                      <td>{{ entry.filename }}</td>
+                      <td>{{ entry.contentType }}</td>
+                      <td>{{ entry.timestamp }}</td>
+                      <td>{{ entry.sizeBytes }}</td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          }
+        </section>
+
+        @if (diagnostics()!.errors.length > 0) {
+          <section class="debug-section">
+            <h2 class="text-lg">Errors</h2>
+            <ul class="debug-errors">
+              @for (err of diagnostics()!.errors; track err) {
+                <li>{{ err }}</li>
+              }
+            </ul>
+          </section>
+        }
+      }
+
+      <button
+        type="button"
+        class="btn btn-secondary mt-md"
+        (click)="runDiagnostics()"
+      >
+        Re-run diagnostics
+      </button>
+    </div>
+  </div>
+</div>
