@@ -1,0 +1,20 @@
+@if (errorService.currentError(); as error) {
+  <div class="error-page">
+    <div class="error-card">
+      <h1>😵 Oops!</h1>
+      <p class="error-message">{{ error.message }}</p>
+      
+      <div class="error-actions">
+        <button class="btn btn-primary" (click)="reload()">Reload App</button>
+        <button class="btn btn-secondary" (click)="dismiss()">Dismiss</button>
+      </div>
+
+      <details class="error-details">
+        <summary>Technical details</summary>
+        <pre>{{ error.stack }}</pre>
+        <p class="timestamp">{{ error.timestamp | date:'medium' }}</p>
+      </details>
+    </div>
+  </div>
+}
+

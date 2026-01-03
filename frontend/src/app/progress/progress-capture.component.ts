@@ -1,6 +1,7 @@
 import { Component, signal, viewChild, ElementRef, inject, OnDestroy } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { SupabaseService } from '../supabase.service';
+import { Subscription } from 'rxjs';
 
 @Component({
   selector: 'app-progress-capture',
@@ -25,13 +26,14 @@ export class ProgressCaptureComponent implements OnDestroy {
   notes = signal('');
 
   private stream: MediaStream | null = null;
+	private routeSub: Subscription | null = null;
 
-  constructor() {
-    this.route.params.subscribe(params => {
-      this.imageId.set(params['imageId']);
-      this.loadImageInfo();
-    });
-  }
+	constructor() {
+		this.routeSub = this.route.params.subscribe(params => {
+			this.imageId.set(params['imageId']);
+			void this.loadImageInfo();
+		});
+	}
 
   private async loadImageInfo() {
     try {
@@ -124,6 +126,7 @@ export class ProgressCaptureComponent implements OnDestroy {
   }
 
   ngOnDestroy() {
+		this.routeSub?.unsubscribe();
     this.stopCamera();
     if (this.capturedUrl()) {
       URL.revokeObjectURL(this.capturedUrl()!);

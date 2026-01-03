@@ -2,10 +2,11 @@ import { Component, inject, OnInit, signal } from '@angular/core';
 import { RouterOutlet, RouterLink, RouterLinkActive, Router } from '@angular/router';
 import { SwUpdate } from '@angular/service-worker';
 import { SupabaseService } from './supabase.service';
+import { ErrorPageComponent } from './error/error-page.component';
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet, RouterLink, RouterLinkActive],
+  imports: [RouterOutlet, RouterLink, RouterLinkActive, ErrorPageComponent],
   templateUrl: './app.html',
   styleUrl: './app.css'
 })

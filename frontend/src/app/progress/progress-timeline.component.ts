@@ -1,18 +1,20 @@
-import { Component, signal, inject, OnInit } from '@angular/core';
+import { Component, signal, inject, OnInit, OnDestroy } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { SupabaseService, ImageRow, ProgressPhotoRow } from '../supabase.service';
+import { Subscription } from 'rxjs';
 
 @Component({
   selector: 'app-progress-timeline',
   templateUrl: './progress-timeline.component.html',
   styleUrl: './progress-timeline.component.scss'
 })
-export class ProgressTimelineComponent implements OnInit {
-  private supabase = inject(SupabaseService);
-  private route = inject(ActivatedRoute);
-  private router = inject(Router);
+	export class ProgressTimelineComponent implements OnInit, OnDestroy {
+	  private supabase = inject(SupabaseService);
+	  private route = inject(ActivatedRoute);
+	  private router = inject(Router);
+	  private routeSub: Subscription | null = null;
 
-  imageId = signal<string>('');
+	  imageId = signal<string>('');
   image = signal<ImageRow | null>(null);
   progressPhotos = signal<ProgressPhotoRow[]>([]);
   isLoading = signal(true);
@@ -25,12 +27,12 @@ export class ProgressTimelineComponent implements OnInit {
   // Selected photo for full view
   selectedPhoto = signal<ProgressPhotoRow | null>(null);
 
-  async ngOnInit() {
-    this.route.params.subscribe(async params => {
-      this.imageId.set(params['imageId']);
-      await this.loadData();
-    });
-  }
+	  ngOnInit() {
+	    this.routeSub = this.route.params.subscribe(params => {
+	      this.imageId.set(params['imageId']);
+	      void this.loadData();
+	    });
+	  }
 
   private async loadData() {
     this.isLoading.set(true);
@@ -115,6 +117,10 @@ export class ProgressTimelineComponent implements OnInit {
 
   goBack() {
     this.router.navigate(['/gallery']);
-  }
+	  }
+
+	  ngOnDestroy() {
+	    this.routeSub?.unsubscribe();
+	  }
 }
 

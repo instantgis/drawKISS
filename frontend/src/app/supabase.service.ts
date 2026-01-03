@@ -1,4 +1,4 @@
-import { Injectable, signal } from '@angular/core';
+import { Injectable, signal, OnDestroy } from '@angular/core';
 import { createClient, SupabaseClient, User, Session } from '@supabase/supabase-js';
 import { environment } from '../environments/environment';
 import { Database } from '../types/drawkiss';
@@ -15,12 +15,13 @@ export type ProgressPhotoInsert = Database['drawkiss']['Tables']['progress_photo
 @Injectable({
   providedIn: 'root'
 })
-export class SupabaseService {
-  private supabase: SupabaseClient<Database>;
+	export class SupabaseService implements OnDestroy {
+	  private supabase: SupabaseClient<Database>;
+	  private authSubscription: { unsubscribe: () => void } | null = null;
 
-  // Auth state
-  currentUser = signal<User | null>(null);
-  session = signal<Session | null>(null);
+	  // Auth state
+	  currentUser = signal<User | null>(null);
+	  session = signal<Session | null>(null);
 
   // Promise that resolves when initial auth check is complete
   readonly authReady: Promise<void>;
@@ -45,14 +46,21 @@ export class SupabaseService {
       this.currentUser.set(session?.user ?? null);
     });
 
-    // Listen for auth changes
-    this.supabase.auth.onAuthStateChange((_event, session) => {
-      this.session.set(session);
-      this.currentUser.set(session?.user ?? null);
-    });
-  }
+	    // Listen for auth changes
+	    const {
+	      data: { subscription }
+	    } = this.supabase.auth.onAuthStateChange((_event, session) => {
+	      this.session.set(session);
+	      this.currentUser.set(session?.user ?? null);
+	    });
+	    this.authSubscription = subscription;
+	  }
 
-  /**
+	  ngOnDestroy(): void {
+	    this.authSubscription?.unsubscribe();
+	  }
+
+	  /**
    * Sign in with email and password.
    */
   async signIn(email: string, password: string): Promise<void> {

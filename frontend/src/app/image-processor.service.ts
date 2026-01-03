@@ -35,40 +35,52 @@ export class ImageProcessorService {
     this.status.set('Loading OpenCV.js...');
 
     try {
-      await new Promise<void>((resolve, reject) => {
-        const timeout = setTimeout(() => reject(new Error('OpenCV load timeout (30s)')), 30000);
-
-        const checkReady = () => {
-          if (typeof cv !== 'undefined' && cv.Mat) {
-            clearTimeout(timeout);
-            resolve();
-            return true;
-          }
-          return false;
-        };
-
-        // Already loaded?
-        if (checkReady()) return;
-
-        // Poll for cv to become available and ready
-        const poll = setInterval(() => {
-          if (typeof cv !== 'undefined') {
-            // cv object exists, check if WASM is ready
-            if (cv.Mat) {
-              clearInterval(poll);
-              clearTimeout(timeout);
-              resolve();
-            } else if (!cv.onRuntimeInitialized) {
-              // Set callback if not already set
-              cv.onRuntimeInitialized = () => {
-                clearInterval(poll);
-                clearTimeout(timeout);
-                resolve();
-              };
-            }
-          }
-        }, 100);
-      });
+		  await new Promise<void>((resolve, reject) => {
+		    let poll: ReturnType<typeof setInterval> | null = null;
+		    let timeout: ReturnType<typeof setTimeout>;
+		
+		    const cleanup = () => {
+		      if (poll !== null) {
+		        clearInterval(poll);
+		        poll = null;
+		      }
+		      clearTimeout(timeout);
+		    };
+		
+		    timeout = setTimeout(() => {
+		      cleanup();
+		      reject(new Error('OpenCV load timeout (30s)'));
+		    }, 30000);
+		
+		    const checkReady = () => {
+		      if (typeof cv !== 'undefined' && cv.Mat) {
+		        cleanup();
+		        resolve();
+		        return true;
+		      }
+		      return false;
+		    };
+		
+		    // Already loaded?
+		    if (checkReady()) return;
+		
+		    // Poll for cv to become available and ready
+		    poll = setInterval(() => {
+		      if (typeof cv !== 'undefined') {
+		        // cv object exists, check if WASM is ready
+		        if (cv.Mat) {
+		          cleanup();
+		          resolve();
+		        } else if (!cv.onRuntimeInitialized) {
+		          // Set callback if not already set
+		          cv.onRuntimeInitialized = () => {
+		            cleanup();
+		            resolve();
+		          };
+		        }
+		      }
+		    }, 100);
+		  });
 
       this.isReady.set(true);
       this.status.set('Ready');
