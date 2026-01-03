@@ -57,7 +57,8 @@
               <span class="image-date">{{ formatDate(image.date_taken) }}</span>
             </div>
             <div class="image-actions">
-              <button class="action-btn" (click)="addProgress($event, image.id)" title="Add progress photo">+ Progress</button>
+              <button class="action-btn" (click)="addProgress($event, image.id)" title="Add progress photo">Progress</button>
+              <button class="action-btn" (click)="editLayers($event, image.id)" title="Add layers">Layers</button>
               <button class="action-btn" (click)="openImage(image.id)" title="View on easel">Easel</button>
             </div>
           </div>

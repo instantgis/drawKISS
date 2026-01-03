@@ -123,7 +123,8 @@ export class Gallery implements OnInit {
     this.router.navigate(['/easel', imageId]);
   }
 
-  editLayers(imageId: string) {
+  editLayers(event: Event, imageId: string) {
+    event.stopPropagation();
     this.router.navigate(['/edit', imageId]);
   }
 
