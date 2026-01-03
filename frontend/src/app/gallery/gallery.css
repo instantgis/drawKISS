@@ -73,7 +73,7 @@
 .image-card {
   position: relative;
   border-radius: 6px 10px 8px 12px;
-  overflow: visible;
+  overflow: hidden;
   background: var(--color-surface);
   border: 2px solid var(--color-border);
   cursor: pointer;
@@ -194,15 +194,17 @@
 
 .image-actions {
   display: flex;
+  flex-direction: column;
   gap: var(--space-xs);
-  padding: var(--space-xs);
+  padding: var(--space-sm);
   border-top: 1px solid var(--color-border-light);
+  align-items: center;
 }
 
 .action-btn {
-  flex: 1;
+  width: 80%;
   padding: var(--space-xs);
-  border: 1px solid var(--color-border-light);
+  border: 1px solid var(--color-border);
   border-radius: var(--radius-sm);
   background: var(--color-surface);
   color: var(--color-text);
@@ -210,6 +212,7 @@
   font-size: var(--font-size-sm);
   cursor: pointer;
   transition: all var(--transition-fast);
+  text-align: center;
 }
 
 .action-btn:hover {
