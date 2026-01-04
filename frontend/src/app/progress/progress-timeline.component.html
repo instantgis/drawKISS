@@ -29,6 +29,7 @@
       @if (progressPhotos().length === 0) {
         <p class="empty-state">No progress photos yet. Tap + Add to snap your first!</p>
       } @else {
+        <p class="tap-hint">Tap a photo to view, delete, or mark as final</p>
         <div class="timeline-grid">
           @for (photo of progressPhotos(); track photo.id) {
             <div class="timeline-card" [class.is-final]="photo.is_final" (click)="selectPhoto(photo)">

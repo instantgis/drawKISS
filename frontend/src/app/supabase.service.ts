@@ -611,19 +611,27 @@ export type ProgressPhotoInsert = Database['drawkiss']['Tables']['progress_photo
    * Upload a progress photo for an image.
    */
   async uploadProgressPhoto(imageId: string, file: Blob, notes?: string): Promise<ProgressPhotoRow> {
+    console.log('[SupabaseService] uploadProgressPhoto called', { imageId, fileSize: file.size, notes });
+
     try {
       const userId = this.getUserId();
+      console.log('[SupabaseService] userId:', userId);
       if (!userId) throw new Error('Must be logged in to upload');
 
       const id = crypto.randomUUID();
       const storagePath = `${userId}/progress/${id}.png`;
+      console.log('[SupabaseService] Uploading to storage path:', storagePath);
 
       // Upload to storage
       const { error: uploadError } = await this.supabase.storage
         .from('drawkiss')
         .upload(storagePath, file, { contentType: 'image/png' });
 
-      if (uploadError) throw uploadError;
+      if (uploadError) {
+        console.error('[SupabaseService] Storage upload error:', uploadError);
+        throw uploadError;
+      }
+      console.log('[SupabaseService] Storage upload successful');
 
       // Create database record
       const progressData: ProgressPhotoInsert = {
@@ -634,6 +642,7 @@ export type ProgressPhotoInsert = Database['drawkiss']['Tables']['progress_photo
         notes: notes || null,
         is_final: false
       };
+      console.log('[SupabaseService] Inserting progress record:', progressData);
 
       const { data, error: insertError } = await this.supabase
         .schema('drawkiss')
@@ -642,9 +651,15 @@ export type ProgressPhotoInsert = Database['drawkiss']['Tables']['progress_photo
         .select()
         .single();
 
-      if (insertError) throw insertError;
+      if (insertError) {
+        console.error('[SupabaseService] Database insert error:', insertError);
+        throw insertError;
+      }
+
+      console.log('[SupabaseService] Progress photo saved successfully:', data);
       return data;
     } catch (e) {
+      console.error('[SupabaseService] uploadProgressPhoto failed:', e);
       const message = e instanceof Error ? e.message : 'Progress photo upload failed';
       this.error.set(message);
       throw e;

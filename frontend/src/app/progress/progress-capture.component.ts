@@ -96,16 +96,31 @@ export class ProgressCaptureComponent implements OnDestroy {
 
   async save() {
     const blob = this.capturedBlob();
-    if (!blob) return;
+    if (!blob) {
+      console.error('[ProgressCapture] save() called but no blob captured');
+      this.error.set('No photo captured');
+      return;
+    }
 
+    const imageId = this.imageId();
+    if (!imageId) {
+      console.error('[ProgressCapture] save() called but no imageId');
+      this.error.set('No image selected');
+      return;
+    }
+
+    console.log('[ProgressCapture] Starting save...', { imageId, blobSize: blob.size });
     this.processing.set(true);
     this.error.set(null);
 
     try {
-      await this.supabase.uploadProgressPhoto(this.imageId(), blob, this.notes() || undefined);
-      this.router.navigate(['/progress', this.imageId()]);
+      const result = await this.supabase.uploadProgressPhoto(imageId, blob, this.notes() || undefined);
+      console.log('[ProgressCapture] Save successful:', result);
+      this.router.navigate(['/progress', imageId]);
     } catch (e) {
-      this.error.set('Failed to save progress photo');
+      console.error('[ProgressCapture] Save failed:', e);
+      const message = e instanceof Error ? e.message : 'Failed to save progress photo';
+      this.error.set(message);
     } finally {
       this.processing.set(false);
     }
@@ -123,6 +138,10 @@ export class ProgressCaptureComponent implements OnDestroy {
 
   cancel() {
     this.router.navigate(['/gallery']);
+  }
+
+  viewTimeline() {
+    this.router.navigate(['/progress', this.imageId()]);
   }
 
   ngOnDestroy() {
