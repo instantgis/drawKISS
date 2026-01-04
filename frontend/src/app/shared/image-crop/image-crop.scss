@@ -1,0 +1,125 @@
+:host {
+  display: block;
+  height: 100%;
+  overflow: hidden;
+}
+
+// Container fills the media frame and stacks image + actions vertically
+.crop-container {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+  overflow: hidden;
+}
+
+.message-banner {
+  padding: var(--space-xs) var(--space-sm);
+  border-radius: var(--radius-sm);
+  text-align: center;
+
+  &.error {
+    background: rgba(248, 113, 113, 0.1);
+    border: 1px solid var(--color-error);
+    color: var(--color-error);
+  }
+}
+
+.image-wrapper {
+  position: relative;
+  flex: 1 1 auto;
+  min-height: 0; // Allow shrinking in flex column
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-surface);
+  overflow: hidden;
+}
+
+.image-container {
+  position: relative;
+  display: inline-block;
+}
+
+.image-container img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  display: block;
+}
+
+// Darkened areas outside the crop rectangle
+.overlay {
+  position: absolute;
+  left: 0;
+  top: 0;
+  background: rgba(0, 0, 0, 0.45);
+  pointer-events: none;
+}
+
+.overlay-top,
+.overlay-bottom {
+  left: 0;
+  right: 0;
+}
+
+.overlay-left,
+.overlay-right {
+  top: 0;
+}
+
+// Visible crop box the user can drag/move
+.crop-area {
+  position: absolute;
+  border: 3px solid var(--color-primary-dark);
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.85);
+  box-sizing: border-box;
+  cursor: move;
+}
+
+// Corner handles for resizing (high-contrast so they pop on white)
+.handle {
+  position: absolute;
+  width: 16px;
+  height: 16px;
+  border-radius: 4px;
+  background: var(--color-primary-dark);
+  border: 2px solid #ffffff;
+  box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.6);
+}
+
+.handle-nw {
+  top: -8px;
+  left: -8px;
+  cursor: nwse-resize;
+}
+
+.handle-ne {
+  top: -8px;
+  right: -8px;
+  cursor: nesw-resize;
+}
+
+.handle-sw {
+  bottom: -8px;
+  left: -8px;
+  cursor: nesw-resize;
+}
+
+.handle-se {
+  bottom: -8px;
+  right: -8px;
+  cursor: nwse-resize;
+}
+
+.crop-actions {
+  display: flex;
+  justify-content: center;
+  gap: var(--space-sm);
+  flex-shrink: 0;
+}
+
+.hidden {
+  display: none !important;
+}

@@ -83,6 +83,11 @@ export const routes: Routes = [
     canActivate: [authGuard]
   },
   {
+    path: 'crop/:type/:id',
+    loadComponent: () => import('./shared/image-crop/image-crop').then(m => m.ImageCrop),
+    canActivate: [authGuard]
+  },
+  {
     path: 'about',
     loadComponent: () => import('./about/about.component').then(m => m.AboutComponent)
   },

@@ -6,7 +6,7 @@ import { SupabaseService, ImageRow, CategoryRow } from '../supabase.service';
   selector: 'app-gallery',
   imports: [RouterLink],
   templateUrl: './gallery.html',
-  styleUrl: './gallery.css',
+  styleUrl: './gallery.scss',
 })
 export class Gallery implements OnInit {
   private supabase = inject(SupabaseService);

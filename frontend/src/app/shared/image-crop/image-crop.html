@@ -1,0 +1,74 @@
+<div class="crop-container">
+  @if (error()) {
+    <div class="message-banner error">{{ error() }}</div>
+  }
+
+  @if (isLoading()) {
+    <div class="loading-overlay">
+      <span class="spinner"></span>
+    </div>
+  }
+
+  <div class="image-wrapper" #container>
+    <!-- Image container positions overlays relative to the image -->
+    <div class="image-container"
+      [style.width.px]="displayWidth() || null"
+      [style.height.px]="displayHeight() || null">
+      @if (internalUrl() || imageUrl()) {
+        <img
+          #image
+          [src]="internalUrl() || imageUrl()"
+          (load)="onImageLoad()"
+          (error)="onImageError($event)"
+          alt="Image to crop"
+          crossorigin="anonymous"
+        />
+      }
+
+      @if (!isLoading() && !error()) {
+        <!-- Darkened overlay outside crop area -->
+        <div class="overlay overlay-top" [style.height.px]="cropRect().y"></div>
+        <div class="overlay overlay-bottom"
+          [style.top.px]="cropRect().y + cropRect().height"
+          [style.height.px]="displayHeight() - cropRect().y - cropRect().height">
+        </div>
+        <div class="overlay overlay-left"
+          [style.top.px]="cropRect().y"
+          [style.height.px]="cropRect().height"
+          [style.width.px]="cropRect().x">
+        </div>
+        <div class="overlay overlay-right"
+          [style.top.px]="cropRect().y"
+          [style.height.px]="cropRect().height"
+          [style.left.px]="cropRect().x + cropRect().width"
+          [style.width.px]="displayWidth() - cropRect().x - cropRect().width">
+        </div>
+
+        <!-- Crop area -->
+        <div class="crop-area"
+          [style.left.px]="cropRect().x"
+          [style.top.px]="cropRect().y"
+          [style.width.px]="cropRect().width"
+          [style.height.px]="cropRect().height">
+          <div class="handle handle-nw"></div>
+          <div class="handle handle-ne"></div>
+          <div class="handle handle-sw"></div>
+          <div class="handle handle-se"></div>
+        </div>
+      }
+    </div>
+  </div>
+
+  <canvas #canvas class="hidden"></canvas>
+
+  <div class="crop-actions">
+    <button class="btn btn-primary" (click)="applyCrop()" [disabled]="isProcessing() || isLoading()">
+      @if (isProcessing()) {
+        <span class="spinner"></span> Cropping...
+      } @else {
+        ✓ Apply Crop
+      }
+    </button>
+    <button class="btn btn-secondary" (click)="cancel()" [disabled]="isProcessing()">Cancel</button>
+  </div>
+</div>

@@ -37,6 +37,7 @@
               @if (photo.is_final) {
                 <span class="final-badge">✓ Final</span>
               }
+              <button class="btn-crop" (click)="cropPhoto(photo); $event.stopPropagation()">✂ Crop</button>
               <div class="card-info">
                 <span class="card-date">{{ formatDate(photo.created_at) }}</span>
                 @if (photo.notes) {

@@ -688,6 +688,58 @@ export type ProgressPhotoInsert = Database['drawkiss']['Tables']['progress_photo
   }
 
   /**
+   * Get image info for cropping based on type.
+   * Returns storage path and return URL for navigation after crop.
+   */
+  async getImageForCrop(type: 'progress' | 'raw' | 'layer', id: string): Promise<{ storagePath: string; returnUrl: string } | null> {
+    try {
+      if (type === 'progress') {
+        const { data, error } = await this.supabase
+          .schema('drawkiss')
+          .from('progress_photos')
+          .select('storage_path, image_id')
+          .eq('id', id)
+          .single();
+        if (error || !data) return null;
+        return { storagePath: data.storage_path, returnUrl: `/progress/${data.image_id}` };
+      } else if (type === 'raw') {
+        const { data, error } = await this.supabase
+          .schema('drawkiss')
+          .from('images')
+          .select('raw_path')
+          .eq('id', id)
+          .single();
+        if (error || !data) return null;
+        return { storagePath: data.raw_path, returnUrl: `/gallery` };
+      } else if (type === 'layer') {
+        const { data, error } = await this.supabase
+          .schema('drawkiss')
+          .from('layers')
+          .select('storage_path, image_id')
+          .eq('id', id)
+          .single();
+        if (error || !data) return null;
+        return { storagePath: data.storage_path, returnUrl: `/easel/${data.image_id}` };
+      }
+      return null;
+    } catch {
+      return null;
+    }
+  }
+
+  /**
+   * Save cropped image back to storage (overwrites existing file).
+   * Storage path format: {user_id}/{type}/{id}.{ext}
+   */
+  async saveCroppedImage(storagePath: string, blob: Blob): Promise<void> {
+    const { error } = await this.supabase.storage
+      .from('drawkiss')
+      .upload(storagePath, blob, { upsert: true });
+
+    if (error) throw error;
+  }
+
+  /**
    * Get progress photo count for an image.
    */
   async getProgressPhotoCount(imageId: string): Promise<number> {

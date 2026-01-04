@@ -115,6 +115,10 @@ import { Subscription } from 'rxjs';
     this.router.navigate(['/progress', this.imageId(), 'capture']);
   }
 
+  cropPhoto(photo: ProgressPhotoRow) {
+    this.router.navigate(['/crop', 'progress', photo.id]);
+  }
+
   goBack() {
     this.router.navigate(['/gallery']);
 	  }
