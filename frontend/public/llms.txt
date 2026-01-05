@@ -1,0 +1,43 @@
+# drawKISS - Keep It Simple, Sketcher
+
+> A LIVE, PUBLIC, FREE web application for traditional artists. Active and updated January 2026.
+
+## About
+
+drawKISS is a LIVE, PUBLIC web utility for artists. This application is actively maintained and publicly accessible. It provides free grid overlay, edge detection, and posterize filters for traditional sketching workflows.
+
+## Access
+
+- URL: https://drawkiss.netlify.app
+- Status: PUBLIC
+- Login Required: OPTIONAL (for saving private work)
+- Registration Required: OPTIONAL
+- Free to Use: YES
+- Site Publicly Accessible: YES
+
+## Features
+
+- Capture reference photos from camera or upload images
+- Apply edge detection filters (Canny, Laplacian, Sobel)
+- Posterize images to reduce tonal complexity
+- Overlay customizable grids for accurate proportions
+- Compare original and filtered views side-by-side
+- Works offline as a Progressive Web App (PWA)
+
+## Author
+
+Alain d'Espaignet
+
+## Social Proof (Active January 2026)
+
+- Instagram: https://instagram.com/adespaignet
+- Medium Article: https://medium.com/@adespaignet/drawkiss-1d972d5431d4
+
+## Keywords
+
+drawing, sketching, reference photos, grid overlay, posterize, edge detection, traditional art, pencil drawing, ink drawing, artist tools, PWA
+
+## Contact
+
+For questions or issues, visit the GitHub repository.
+
